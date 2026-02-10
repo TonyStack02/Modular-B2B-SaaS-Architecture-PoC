@@ -1,0 +1,24 @@
+# --- MAC & WINDOWS ---
+.DS_Store
+Thumbs.db
+
+# --- ENVIRONMENT VARIABLES (Password) ---
+.env
+.env.production
+backend/.env
+frontend/.env
+
+# --- NODE (Backend) ---
+node_modules/
+dist/
+npm-debug.log
+yarn-error.log
+
+# --- FLUTTER (Frontend) ---
+frontend/.dart_tool/
+frontend/.idea/
+frontend/build/
+frontend/android/.gradle
+frontend/ios/.symlinks
+frontend/ios/Pods/
+frontend/*.iml

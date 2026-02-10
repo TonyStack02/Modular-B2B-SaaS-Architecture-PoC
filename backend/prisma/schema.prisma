@@ -1,0 +1,159 @@
+// backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- 1. UTENTI E RUOLI (Chi usa l'app) ---
+
+enum UserRole {
+  OWNER   // Proprietario del locale
+  STAFF   // Cameriere, Bagnino, Barbiere
+  CLIENT  // Cliente finale che ordina
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String   // Es: "Pizzeria Da Mario"
+  type      String   @default("RESTAURANT") // RESTAURANT, BEACH, BARBER
+  createdAt DateTime @default(now())
+
+  // Relazioni
+  users      User[]
+  areas      Area[]
+  categories Category[]
+  products   Product[]
+  orders     Order[]
+  bookings   Booking[]
+}
+
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+  name     String?
+  role     UserRole @default(CLIENT)
+
+  // Se è STAFF o OWNER, appartiene a un Tenant. Se è CLIENT, questo può essere null (o legato all'ultimo locale visitato)
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  bookings Booking[]
+  orders   Order[]
+}
+
+// --- 2. RISORSE FISICHE (Dove ci si siede) ---
+
+model Area {
+  id       String @id @default(uuid())
+  name     String // Es: "Sala Interna", "Dehor", "Fila 1"
+  
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  resources Resource[]
+}
+
+model Resource {
+  id        String  @id @default(uuid())
+  name      String  // Es: "Tavolo 4", "Ombrellone 12"
+  capacity  Int     @default(2)
+  status    String  @default("FREE") // FREE, BUSY, RESERVED
+  
+  areaId    String
+  area      Area   @relation(fields: [areaId], references: [id])
+
+  bookings  Booking[]
+  orders    Order[]
+}
+
+// --- 3. MENU E PRODOTTI (Cosa si vende) ---
+
+model Category {
+  id       String @id @default(uuid())
+  name     String // Es: "Pizze", "Bibite"
+  
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  products Product[]
+}
+
+model Product {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  price       Decimal @db.Decimal(10, 2)
+  isAvailable Boolean @default(true)
+  imageUrl    String?
+
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  orderItems  OrderItem[]
+}
+
+// --- 4. PRENOTAZIONI (Il futuro) ---
+
+model Booking {
+  id        String   @id @default(uuid())
+  dateTime  DateTime // Data e ora prenotazione
+  guests    Int      @default(2)
+  status    String   @default("CONFIRMED") // PENDING, CONFIRMED, CANCELLED
+
+  userId    String?  // Chi ha prenotato (opzionale se presa al telefono)
+  user      User?    @relation(fields: [userId], references: [id])
+
+  resourceId String? // Quale tavolo/ombrellone
+  resource   Resource? @relation(fields: [resourceId], references: [id])
+
+  tenantId  String
+  tenant    Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// --- 5. ORDINI E CONTI (Il presente) ---
+
+enum OrderStatus {
+  OPEN      // Stanno mangiando
+  PAID      // Hanno pagato
+  CANCELLED // Errore
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  totalAmount Decimal     @default(0.00) @db.Decimal(10, 2)
+  status      OrderStatus @default(OPEN)
+  createdAt   DateTime    @default(now())
+  
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  
+  resourceId  String?  // Es: Tavolo 4
+  resource    Resource? @relation(fields: [resourceId], references: [id])
+  
+  userId      String?  // Chi ha preso l'ordine
+  user        User?    @relation(fields: [userId], references: [id])
+
+  items       OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  quantity  Int     @default(1)
+  unitPrice Decimal @db.Decimal(10, 2) // Salviamo il prezzo storico
+  notes     String? // Es: "No cipolla"
+
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+}

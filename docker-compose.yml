@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # IL DATABASE (PostgreSQL)
+  db:
+    image: postgres:15
+    container_name: juicy_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin           # Utente del DB
+      POSTGRES_PASSWORD: password123 # Password (per ora va bene questa)
+      POSTGRES_DB: juicy_db          # Nome del database iniziale
+    ports:
+      - "5433:5432"                  # Apre la porta su Windows
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Salva i dati anche se spegni Docker
+
+  # IL PANNELLO DI CONTROLLO (PgAdmin) - Opzionale ma utilissimo
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: juicy_admin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@juicy.com
+      PGADMIN_DEFAULT_PASSWORD: password123
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
