@@ -7,21 +7,25 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Inizio il seeding del database...');
 
-  // 1. Pulizia (Opzionale: cancella tutto se vuoi ripartire da zero, scommenta se serve)
-  // await prisma.orderItem.deleteMany();
-  // await prisma.order.deleteMany();
-  // await prisma.product.deleteMany();
-  // await prisma.category.deleteMany();
-  // await prisma.resource.deleteMany();
-  // await prisma.area.deleteMany();
-  // await prisma.user.deleteMany();
-  // await prisma.tenant.deleteMany();
+  // 1. PULIZIA TOTALE (Svuotiamo le scatole dalla più piccola alla più grande)
+  // Partiamo da ciò che sta "in fondo" alla catena
+  await prisma.orderItem.deleteMany(); // Dipende da Order e Product
+  await prisma.order.deleteMany();     // Dipende da Resource
+  await prisma.product.deleteMany();   // Dipende da Category
+  await prisma.category.deleteMany();  // Dipende da Tenant
+  await prisma.resource.deleteMany();  // Dipende da Area e Tenant
+  await prisma.area.deleteMany();      // Dipende da Tenant
+  await prisma.user.deleteMany();      // Dipende da Tenant
+  
+  // ORA il Tenant è finalmente "nudo" e può essere cancellato
+  await prisma.tenant.deleteMany();    
+
+  console.log('🗑️ Database ripulito con successo');
 
   // 2. Crea il Ristorante (Tenant)
   const tenant = await prisma.tenant.create({
     data: {
       name: 'Pizzeria Da Mario',
-      type: 'RESTAURANT',
     },
   });
 
@@ -31,7 +35,7 @@ async function main() {
   const owner = await prisma.user.create({
     data: {
       email: 'mario@juicy.com',
-      password: 'password123', // In produzione la cripteremo!
+      password: 'password123', // In produzione va criptata con bcrypt!
       name: 'Mario Rossi',
       role: 'OWNER',
       tenantId: tenant.id,
@@ -54,9 +58,9 @@ async function main() {
     await prisma.resource.create({
       data: {
         name: `Tavolo ${i}`,
-        capacity: 4,
         areaId: sala.id,
-        status: 'FREE',
+        tenantId: tenant.id, // <--- AGGIUNTO: Obbligatorio dopo la migrazione
+        status: 'AVAILABLE', // <--- CORRETTO: Usiamo AVAILABLE come definito nello schema
       },
     });
   }
@@ -65,9 +69,9 @@ async function main() {
     await prisma.resource.create({
       data: {
         name: `Tavolo Esterno ${i}`,
-        capacity: 2,
         areaId: dehor.id,
-        status: 'FREE',
+        tenantId: tenant.id, // <--- AGGIUNTO: Obbligatorio
+        status: 'AVAILABLE',
       },
     });
   }

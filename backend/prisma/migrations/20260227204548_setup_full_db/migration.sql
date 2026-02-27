@@ -41,6 +41,7 @@ CREATE TABLE "Resource" (
     "name" TEXT NOT NULL,
     "capacity" INTEGER NOT NULL DEFAULT 2,
     "status" TEXT NOT NULL DEFAULT 'FREE',
+    "tenantId" TEXT NOT NULL,
     "areaId" TEXT NOT NULL,
 
     CONSTRAINT "Resource_pkey" PRIMARY KEY ("id")
@@ -115,6 +116,9 @@ ALTER TABLE "User" ADD CONSTRAINT "User_tenantId_fkey" FOREIGN KEY ("tenantId") 
 
 -- AddForeignKey
 ALTER TABLE "Area" ADD CONSTRAINT "Area_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Resource" ADD CONSTRAINT "Resource_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Resource" ADD CONSTRAINT "Resource_areaId_fkey" FOREIGN KEY ("areaId") REFERENCES "Area"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
