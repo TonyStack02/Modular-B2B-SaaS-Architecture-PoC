@@ -26,6 +26,7 @@ export class CatalogService {
                 name: dto.name,
                 description: dto.description,
                 price: dto.price,
+                imageUrl: dto.imageUrl,
                 categoryId: dto.categoryId,
                 tenantId: tenantId,
             }

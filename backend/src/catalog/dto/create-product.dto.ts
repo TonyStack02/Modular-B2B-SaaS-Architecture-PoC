@@ -15,6 +15,10 @@ export class CreateProductDto {
     @Min(0)
     price: number; // Prezzo di vendita
 
+    @IsString()
+    @IsOptional()
+    imageUrl?: string;
+
     @IsNotEmpty()
     @IsUUID()
     categoryId: string; // L'ID della categoria a cui appartiene
