@@ -2,13 +2,13 @@
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-//import dei DTO
+import { OrderGateway } from 'src/order/order.gateway';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 
 @Injectable()
 export class GuestService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private orderGateway: OrderGateway) {}
 
   // 1. Dammi tutte le informazioni del Ristorante (Menu incluso)
   async getRestaurantMenu(tenantId: string) {
@@ -62,7 +62,7 @@ export class GuestService {
     });
 
   // Creiamo l'ordine e gli elementi dell'ordine (OrderItem) in un'unica operazione (Transazione)
-    return this.prisma.order.create({
+    const order = await this.prisma.order.create({
       data: {
         tenantId: dto.tenantId,
         resourceId: dto.resourceId,
@@ -85,5 +85,8 @@ export class GuestService {
       // Chiediamo a Prisma di restituirci l'ordine includendo anche i dettagli appena creati
       include: { items: true }
     });
+    // 2. MAGIA: Inviamo la notifica in tempo reale all'Owner!
+    this.orderGateway.sendNewOrderNotification (order.tenantId, order);
+    return order;
   }
 }

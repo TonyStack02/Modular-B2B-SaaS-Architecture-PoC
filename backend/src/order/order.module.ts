@@ -3,13 +3,12 @@
 import { Module } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { OrderController } from './order.controller';
-import { PrismaService } from '../prisma.service'; // Necessario per le query al database
+import { OrderGateway } from './order.gateway';
+import { PrismaService } from '../prisma.service'; 
 
 @Module({
-  // Il controller gestisce le rotte API (la "bocca")
   controllers: [OrderController],
-  // I providers sono i servizi che contengono la logica (il "cervello")
-  // Inseriamo anche PrismaService perché OrderService lo usa nel costruttore
   providers: [OrderService, PrismaService],
+  exports: [OrderGateway], // Lo esportiamo per poterlo usare in altri moduli (es. Guest)
 })
 export class OrderModule {}
