@@ -30,5 +30,22 @@ export class AreaService {
         });
     }
 
+    // Metodo per rimuovere un'area
+    async remove (id: string, tenantId: string) {
+        // Verifichiamo che l'area esista e appartenga al ristorante corretto
+        // prima di eliminarla (evita che un owner elimini aree di altri)
+        const area = await this.prisma.area.findFirst({
+            where: { id, tenantId }
+        });
+
+        if (!area) {
+            throw new Error("Area non trovata o non autorizzato");
+        }
+
+        return this.prisma.area.delete({
+            where: { id }
+        });
+    }
+
 
 }
