@@ -3,6 +3,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { SrvRecord } from 'dns';
 
 @Injectable()
 export class OrderService {
@@ -38,4 +39,14 @@ export class OrderService {
       data: { status: dto.status }
     });
   }
+
+  async markAsPaid(orderId: string) {
+    console.log(`🛠️ Aggiorno ordine ${orderId} come PAGATO nel database...`);
+
+    return this.prisma.order.update({
+      where: {id: orderId},
+      data: {status: 'PAID'}
+    });
+  }
+
 }

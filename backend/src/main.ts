@@ -7,7 +7,10 @@ import { join } from 'path';
 import * as express from 'express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Configuriamo l'app per catturare il body "grezzo"
+  const app = await NestFactory.create(AppModule , {
+    rawBody: true,
+  });
 
   //Attiva la validazione globale
   app.useGlobalPipes(new ValidationPipe({
