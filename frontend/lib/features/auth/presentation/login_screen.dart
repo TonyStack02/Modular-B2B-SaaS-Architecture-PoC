@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_controller.dart';
+import 'package:go_router/go_router.dart';
 
 // Usiamo ConsumerWidget invece di StatelessWidget per poter usare 'ref'
 class LoginScreen extends ConsumerWidget {
@@ -59,6 +60,20 @@ class LoginScreen extends ConsumerWidget {
                   );
                 },
                 child: const Text("Entra"),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {
+                // 1. LA NAVIGAZIONE: Chiediamo al router di portarci alla pagina di registrazione.
+                // Usiamo context.push invece di context.go perché vogliamo che l'utente 
+                // possa tornare indietro al login se cambia idea (usando il tasto "back" del telefono).
+                context.push('/register'); 
+              },
+              child: const Text(
+                "Non hai un account? Registrati ora",
+                style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
               ),
             ),
 

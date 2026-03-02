@@ -40,6 +40,35 @@ export class OrderService {
     });
   }
 
+  // Calcola quanti ordini sono ancora aperti oggi
+  async countActiveOrders(tenantId: string) {
+    return this.prisma.order.count({
+      where: {
+        tenantId: tenantId,
+        status: { notIn: ['PAID', 'CANCELLED'] } 
+      }
+    });
+  }
+
+  // Calcola l'incasso di oggi
+  async getTodayIncome(tenantId: string) {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const result = await this.prisma.order.aggregate({
+      _sum: { totalAmount: true }, // Sostituisci totalAmount se nel tuo DB si chiama diversamente!
+      where: {
+        tenantId: tenantId,
+        status: 'PAID',
+        createdAt: { gte: startOfToday, lte: endOfToday }
+      }
+    });
+
+    return result._sum.totalAmount || 0;
+  }
+
   async markAsPaid(orderId: string) {
     console.log(`🛠️ Aggiorno ordine ${orderId} come PAGATO nel database...`);
 

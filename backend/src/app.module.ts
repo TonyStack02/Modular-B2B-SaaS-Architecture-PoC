@@ -9,9 +9,10 @@ import { AreaModule } from './area/area.module';
 import { ResourceModule } from './resource/resource.module';
 import { OrderModule } from './order/order.module';
 import { StripeModule } from './stripe/stripe.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
-  imports: [GuestModule, AuthModule, CatalogModule, AreaModule, ResourceModule, OrderModule, StripeModule],
+  imports: [GuestModule, AuthModule, CatalogModule, AreaModule, ResourceModule, OrderModule, StripeModule, DashboardModule],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })

@@ -80,6 +80,12 @@ export class AuthService {
         // 5. Generiamo il token JWT firmato con la nostra chiave segreta
         return {
             access_token: this.jwtService.sign(payload),
+            user: {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                tenantId: user.tenantId,
+            }
         };
 
     }

@@ -22,13 +22,17 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final user = authState.value;
       final isLoggedIn = user != null;
-      final isLoggingIn = state.matchedLocation == '/login';
 
-      if (!isLoggedIn) {
+      // 1. DEFINIAMO LE "ZONE SICURE": 
+      // Qui aggiungiamo tutte le rotte accessibili senza essere loggati.
+      final isAuthPath = state.matchedLocation == '/login' || 
+                         state.matchedLocation == '/register';
+
+      if (!isLoggedIn && !isAuthPath) {
         return '/login';
       }
 
-      if (isLoggedIn && isLoggingIn) {
+      if (isLoggedIn && isAuthPath) {
         return '/home';
       }
 

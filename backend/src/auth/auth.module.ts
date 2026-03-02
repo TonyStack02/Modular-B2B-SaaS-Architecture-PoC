@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
+import { PrismaService } from 'src/prisma.service';
 
 @Module({
   // 'imports' è la lista di altri moduli di cui questa "scatola" ha bisogno per funzionare
@@ -27,7 +28,7 @@ import { JwtStrategy } from './jwt.strategy';
   controllers: [AuthController],
   
   // 'providers' sono i servizi che contengono la logica "intelligente" (calcoli, database)
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, PrismaService],
   exports: [AuthService],
 })
 export class AuthModule {}
