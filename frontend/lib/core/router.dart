@@ -1,76 +1,105 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../features/auth/presentation/auth_controller.dart';
+import '../features/auth/presentation/login_screen.dart';
 import 'navigation/scaffold_with_nav_bar.dart'; 
 
-// Importiamo le pagine 
-// Per ora useremo dei placeholder
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
-final router = GoRouter(
-  initialLocation: '/home',
-  navigatorKey: _rootNavigatorKey,
-  routes: [
-    // La "Shell" è la cornice che contiene la BottomNavBar
-    StatefulShellRoute.indexedStack(
-      builder: (context, state, navigationShell) {
-        // Restituiamo il widget che disegna la barra e il contenuto
-        return ScaffoldWithNavBar(
-          navigationShell: navigationShell
-        );
-      },
+// 1. IL ROUTER PROVIDER
+final routerProvider = Provider<GoRouter>((ref) {
 
-      branches: [
-        // Ramo 1: HOME
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/home',
-              builder:(context, state) => const Center(child: Text('Home - Dashboard Live'),),
-            ),
-          ],
-        ),
+  // 2. L'ASCOLTO dello stato di autenticazione
+  final authState = ref.watch(authControllerProvider);
 
-        // Ramo 2: CALENDARIO
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/calendar',
-              builder: (context, state) => const Center(child: Text('Calendario - Mappa Tavoli'),),
-            ),
-          ],
-        ),
+  return GoRouter(
+    initialLocation: '/home',
+    navigatorKey: _rootNavigatorKey,
+    
+    // 3. REDIRECT (Il Buttafuori)
+    redirect: (context, state) {
+      final user = authState.value;
+      final isLoggedIn = user != null;
+      final isLoggingIn = state.matchedLocation == '/login';
 
-        // Ramo 3: ATTIVITÀ (CASSA)
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/activity',
-              builder: (context, state) => Center(child: Text('Attività - Conti Aperti')),
-            ),
-          ],
-        ),
+      if (!isLoggedIn) {
+        return '/login';
+      }
 
-        // Ramo 4: GESTIONE
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/management',
-              builder: (context, state) => Center(child: Text('Gestione - Risorse'),),
-            ),
-          ]
-        ),
+      if (isLoggedIn && isLoggingIn) {
+        return '/home';
+      }
 
-        // Ramo 5: IMPOSTAZIONI
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/settings',
-              builder: (context, state) => Center(child: Text('Impostazioni')),),
-          ]
-        )
+      return null;
+    },
+    
+    routes: [
+      // Rotta pubblica per il Login
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginScreen(),
+      ),
 
-      ],
-    ),
-  ],
-);
+      // La "Shell" con la BottomNavBar
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return ScaffoldWithNavBar(
+            navigationShell: navigationShell,
+          );
+        },
+        branches: [
+          // Ramo 1: HOME
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home',
+                builder: (context, state) => const Center(child: Text('Home - Dashboard Live')),
+              ),
+            ],
+          ),
+
+          // Ramo 2: CALENDARIO
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/calendar',
+                builder: (context, state) => const Center(child: Text('Calendario - Mappa Tavoli')),
+              ),
+            ],
+          ),
+
+          // Ramo 3: ATTIVITÀ (CASSA)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/activity',
+                builder: (context, state) => const Center(child: Text('Attività - Conti Aperti')),
+              ),
+            ],
+          ),
+
+          // Ramo 4: GESTIONE
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/management',
+                builder: (context, state) => const Center(child: Text('Gestione - Risorse')),
+              ),
+            ],
+          ),
+
+          // Ramo 5: IMPOSTAZIONI
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/settings',
+                builder: (context, state) => const Center(child: Text('Impostazioni')),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+  ); // Chiusura GoRouter
+}); // Chiusura Provider

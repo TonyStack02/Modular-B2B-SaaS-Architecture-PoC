@@ -12,6 +12,9 @@ class JuicyApp extends ConsumerWidget { // ConsumerWidget permette di leggere i 
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Leggiamo il router dal provider invece che dal file statico
+    final router = ref.watch(routerProvider);
+
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Juicy',
