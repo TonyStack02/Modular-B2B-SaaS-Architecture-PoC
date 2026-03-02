@@ -41,4 +41,39 @@ class AuthController extends AsyncNotifier<UserModel?> {
   void logout() {
     state = const AsyncData(null);
   }
+
+  //5: REGISTRAZIONE
+  // Riceviamo i 4 campi che il tuo Backend si aspetta nel RegisterDto
+  Future<void> register({
+    required String email,
+    required String password,
+    required String name,
+    required String restaurantName
+  }) async {
+    // 1. STATO DI CARICAMENTO: Diciamo all'app di mostrare il cerchietto.
+    // Questo blocca il pulsante "Registrati" per evitare click multipli.
+    state = const AsyncLoading();
+
+    // 2. ESECUZIONE PROTETTA: Usiamo AsyncValue.guard per catturare eventuali errori (es. email duplicata)
+    state = await AsyncValue.guard(() async {
+        // A. CHIAMATA AL BACKEND: Chiediamo al Repository di creare il Tenant e l'Owner
+        await ref.read(authRepositoryProvider).register(
+          email: email,
+          password: password,
+          name: name,
+          restaurantName: restaurantName,
+        );
+    
+        // B. LOGIN AUTOMATICO: Una volta creato l'utente, dobbiamo ottenere il "badge" (JWT)
+        // Chiamiamo il metodo login che abbiamo già scritto.
+        final loginResponse = await ref.read(authRepositoryProvider).login(email, password);
+
+        // C. TRASFORMAZIONE: Prendiamo il JSON della risposta del login e lo trasformiamo nel Modello
+        final user = UserModel.fromJson(loginResponse.data);
+
+        // D. FINE: Restituiamo l'utente. Riverpod aggiornerà lo stato e il Router ci porterà in Home!
+        return user;
+      });
+  
+    }
 }   

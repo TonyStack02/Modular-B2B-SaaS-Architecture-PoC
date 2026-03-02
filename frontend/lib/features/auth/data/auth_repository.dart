@@ -30,4 +30,24 @@ class AuthRepository {
       },
     );
   }
+
+  // 1. NUOVO METODO REGISTER: 
+  // Riceve i 4 parametri richiesti dal tuo RegisterDto del backend.
+  Future<Response> register({
+    required String email,
+    required String password,
+    required String name,
+    required String restaurantName
+  }) async {
+    return await _dio.post(
+      // Inviamo i dati al nuovo endpoint /auth/register
+      'auth/register',
+      data: {
+        'email': email,
+        'password': password,
+        'name': name,
+        'restaurantName': restaurantName
+      }
+    );
+  }
 }
