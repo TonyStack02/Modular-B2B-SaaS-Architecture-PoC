@@ -1,3 +1,5 @@
+// src\catalog\dto\create-category.dto.ts
+
 import { IsNotEmpty, IsString } from "class-validator";
 
 export class CreateCategoryDto {

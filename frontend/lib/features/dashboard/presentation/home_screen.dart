@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/features/auth/presentation/auth_controller.dart';
 import 'dashboard_controller.dart';
 
 // Usiamo ConsumerWidget invece di StatelessWidget perché abbiamo bisogno di 'ref'
@@ -28,6 +29,11 @@ class HomeScreen extends ConsumerWidget {
             // non vogliamo solo stare a guardare i dati.
             onPressed: () => ref.read(dashboardControllerProvider.notifier).refresh(),
             icon: const Icon(Icons.refresh)
+          ),
+          // LOGOUT
+          IconButton(
+            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
+            icon: const Icon(Icons.logout, color: Colors.redAccent,),
           ),
         ],
       ) ,

@@ -46,6 +46,11 @@ class AuthController extends AsyncNotifier<UserModel?> {
 
   // 4. LOGOUT: Semplice e pulito.
   void logout() {
+
+    // 1. Distruggiamo il braccialetto VIP (Svuotiamo la cassaforte)
+    ref.read(tokenProvider.notifier).clearToken();
+
+    // 2. Diciamo all'app che l'utente non c'è più
     state = const AsyncData(null);
   }
 

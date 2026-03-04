@@ -1,3 +1,5 @@
+// src\catalog\dto\create-product.dto.ts
+
 import { IsNotEmpty, IsOptional, IsString, IsUUID, Min, IsNumber } from 'class-validator';
 
 
