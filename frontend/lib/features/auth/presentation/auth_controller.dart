@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/auth_repository.dart';
 import '../domain/user_model.dart';
+import '../../../core/token_provider.dart';
 
 // 1. IL PROVIDER: Questo espone il nostro Controller a tutta l'app.
 // Usiamo 'AsyncNotifierProvider' perché il login è un'operazione asincrona (richiede tempo).
@@ -27,6 +28,12 @@ class AuthController extends AsyncNotifier<UserModel?> {
     state = await AsyncValue.guard(() async {
       // Chiamiamo il Repository che abbiamo creato prima.
       final response = await ref.read(authRepositoryProvider).login(email, password);
+
+      // 1. ESTRAIAMO IL TOKEN: Lo prendiamo dal JSON che ci manda NestJS
+      final token = response.data['access_token'];
+      
+      // 2. SALVIAMO IL TOKEN: Lo mettiamo nella cassaforte globale
+      ref.read(tokenProvider.notifier).state = token;
 
       // Trasformiamo il JSON ricevuto dal backend NestJS in un oggetto UserModel.
       final user = UserModel.fromJson(response.data);

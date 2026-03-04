@@ -1,20 +1,33 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'token_provider.dart'; // Importiamo la cassaforte
 
-// Questo è il provider che useremo in tutta l'app
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
-      baseUrl: 'http://localhost:3000/', // L'indirizzo del tuo backend NestJS
+      baseUrl: 'http://localhost:3000/', // O 10.0.2.2 se usi emulatore Android
       connectTimeout: const Duration(seconds: 5),
       receiveTimeout: const Duration(seconds: 3),
     ),
   );
 
-  // Aggiungiamo un intercettore per il logging (comodissimo per il debug)
-  dio.interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
+  // IL NOSTRO INTERCEPTOR
+  dio.interceptors.add(InterceptorsWrapper(
+    onRequest: (options, handler) {
+      // 1. Apriamo la cassaforte
+      final token = ref.read(tokenProvider);
+      
+      // 2. Se c'è il badge, lo appuntiamo sulla richiesta (Header Authorization)
+      if (token != null) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+      
+      // 3. Lasciamo partire la richiesta
+      return handler.next(options);
+    },
+  ));
 
-  // Qui in futuro aggiungeremo l'intercettore per il Token JWT
+  dio.interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
   
   return dio;
 });

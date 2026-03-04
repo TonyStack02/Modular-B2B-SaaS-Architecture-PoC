@@ -4,7 +4,9 @@ import 'package:frontend/features/auth/presentation/register_screen.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/login_screen.dart';
+import '../features/dashboard/presentation/home_screen.dart'; 
 import 'navigation/scaffold_with_nav_bar.dart'; 
+
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -65,7 +67,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/home',
-                builder: (context, state) => const Center(child: Text('Home - Dashboard Live')),
+                builder: (context, state) => const HomeScreen(),
               ),
             ],
           ),
