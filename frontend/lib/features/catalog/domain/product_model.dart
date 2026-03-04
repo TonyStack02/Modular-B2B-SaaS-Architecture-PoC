@@ -1,6 +1,5 @@
 // lib/features/catalog/domain/product_model.dart
 
-import 'dart:ffi';
 
 class ProductModel {
   final String id;
