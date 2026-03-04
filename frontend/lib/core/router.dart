@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/dashboard/presentation/home_screen.dart'; 
+import '../features/catalog/presentation/catalog_screen.dart';
 import 'navigation/scaffold_with_nav_bar.dart'; 
 
 
@@ -54,6 +55,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const RegisterScreen(),
       ),
     
+      //Il nostro Menu (Protetta in automatico dal redirect!)
+      GoRoute(
+        path: '/catalog',
+        builder: (context, state) => const CatalogScreen(),
+      ),
+
       // La "Shell" con la BottomNavBar
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

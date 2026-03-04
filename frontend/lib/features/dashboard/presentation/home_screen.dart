@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:frontend/features/auth/presentation/auth_controller.dart';
 import 'dashboard_controller.dart';
 
@@ -91,7 +92,9 @@ class HomeScreen extends ConsumerWidget {
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  onPressed: () => print("Vai a Nuovo Ordine!"),
+                  onPressed: () {
+                    context.push('/catalog'); 
+                  },
                   icon: const Icon(Icons.add_shopping_cart, size: 28),
                   label: const Text("NUOVO ORDINE", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
