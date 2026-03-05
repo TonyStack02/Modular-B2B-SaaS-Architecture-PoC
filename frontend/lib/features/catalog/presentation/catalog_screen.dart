@@ -55,7 +55,7 @@ class CatalogScreen extends ConsumerWidget {
               itemCount: categories.length,
               itemBuilder: (context, index) {
                 final category = categories[index];
-                return _buildCategoryTile(category);
+                return _buildCategoryTile(context, ref, category);
               },
             ),
           );
@@ -65,7 +65,7 @@ class CatalogScreen extends ConsumerWidget {
   }
 
   // --- WIDGET PER LA SINGOLA CATEGORIA ---
-  Widget _buildCategoryTile(CategoryModel category) {
+  Widget _buildCategoryTile(BuildContext context, WidgetRef ref, CategoryModel category) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
@@ -95,9 +95,7 @@ class CatalogScreen extends ConsumerWidget {
             
           // Un bottone extra alla fine della tendina per aggiungere prodotti a QUESTA categoria (lo faremo dopo!)
           TextButton.icon(
-            onPressed: () {
-               print("Andiamo ad aggiungere un prodotto a ${category.name}");
-            }, 
+            onPressed: () => _showAddProductDialog(context, ref, category.id),
             icon: const Icon(Icons.add_circle_outline, color: Colors.orange),
             label: const Text("Aggiungi Prodotto", style: TextStyle(color: Colors.orange)),
           ),
@@ -145,5 +143,76 @@ class CatalogScreen extends ConsumerWidget {
         );
       },
     );
+  }
+
+  // --- IL POPUP PER CREARE IL PRODOTTO ---
+  void _showAddProductDialog(BuildContext context, WidgetRef ref, String categoryId) {
+    final nameController = TextEditingController();
+    final priceController = TextEditingController();
+    final descController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Nuovo Prodotto"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: "Nome (es. Margherita)"),
+                  autofocus: true,
+                ),
+                const SizedBox(height: 8,),
+
+                TextField(
+                  controller: priceController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: "Prezzo (es. 6.50)"),
+                ),
+                const SizedBox(height: 8,),
+
+                TextField(
+                  controller: descController,
+                  decoration: const InputDecoration(labelText: "Descrizione (opzionale)"),
+                )
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Annulla", style: TextStyle(color: Colors.grey),),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+              onPressed: () {
+                final name = nameController.text.trim();
+                // Sostituiamo eventuale virgola con il punto per i decimali (es. 6,50 diventa 6.50)
+                final priceText = priceController.text.trim().replaceAll(',', '.');
+                final price = double.tryParse(priceText) ?? 0.0;
+                final desc = descController.text.trim();
+
+                // Validazione base: nome pieno e prezzo maggiore di zero
+                if (name.isNotEmpty && price >= 0){
+                  ref.read(catalogControllerProvider.notifier).addProduct(
+                    name: name,
+                    price: price,
+                    description: desc,
+                    categoryId: categoryId
+                  );
+                  Navigator.pop(context); // Chiudiamo il popup
+                }
+              } ,
+              child: const Text("Salva", style: TextStyle(color: Colors.white)),
+            )
+          ],
+        );
+      }
+    );
+
   }
 }

@@ -24,8 +24,10 @@ class ProductModel {
       id: json['id'],
       name: json['name'],
       description: json['description'], 
-      price: (json['price'] ?? 0).toDouble(),
-      imageUrl: json['imageUrl'],
+      // Se è una Stringa la convertiamo (tryParse), altrimenti la trattiamo come numero
+      price: json['price'] is String 
+          ? (double.tryParse(json['price']) ?? 0.0) 
+          : (json['price'] ?? 0).toDouble(),      imageUrl: json['imageUrl'],
       categoryId: json['categoryId']
     );
   }

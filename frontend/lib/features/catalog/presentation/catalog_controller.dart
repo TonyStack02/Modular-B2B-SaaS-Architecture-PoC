@@ -45,4 +45,30 @@ class CatalogController extends AsyncNotifier<List<CategoryModel>> {
       rethrow; // Passiamo l'errore alla UI per mostrare un popup rosso
     }
   }
+
+  // --- LA MAGIA: CREARE UN PRODOTTO ---
+  Future<void> addProduct({
+    required String name,
+    String? description,
+    required double price,
+    required String categoryId
+  }) async {
+    try {
+      // 1. Chiamiamo il fattorino
+      final respository = ref.read(catalogRepositoryProvider);
+      await respository.createProduct(
+        name: name,
+        description: description,
+        price: price,
+        categoryId: categoryId,
+      );
+
+      // 2. Ricarichiamo TUTTO il menu!
+      // Così il nuovo prodotto apparirà magicamente dentro la sua categoria
+      await refresh();
+    } catch (e) {
+      print("Errore durante la creazione del prodotto: $e");
+      rethrow;
+    }
+  }
 }

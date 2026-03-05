@@ -37,4 +37,23 @@ class CatalogRepository {
       data: {'name': name}
     );
   }
+
+  // 3. CREA UN NUOVO PRODOTTO (POST /catalog/product)
+  Future<void> createProduct({
+    required String name,
+    String? description,
+    required double price,
+    required String categoryId
+  }) async {
+    await _dio.post(
+      '/catalog/product',
+      data: {
+        'name': name,
+        // Inseriamo la descrizione solo se Mario l'ha scritta
+        if(description != null && description.isNotEmpty) 'description': description,
+        'price': price,
+        'categoryId': categoryId
+      }
+    );
+  }
 }
