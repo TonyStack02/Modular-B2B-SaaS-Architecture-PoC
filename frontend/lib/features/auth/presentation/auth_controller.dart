@@ -1,74 +1,68 @@
+// lib/features/auth/presentation/auth_controller.dart
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/auth_repository.dart';
 import '../domain/user_model.dart';
 import '../../../core/token_provider.dart';
 
-// 1. IL PROVIDER: Questo espone il nostro Controller a tutta l'app.
-// Usiamo 'AsyncNotifierProvider' perché il login è un'operazione asincrona (richiede tempo).
-// Questo permette alla UI di reagire automaticamente quando lo stato cambia.
 final authControllerProvider = AsyncNotifierProvider<AuthController, UserModel?>(() {
   return AuthController();
 });
 
 class AuthController extends AsyncNotifier<UserModel?> {
 
-  // 2. IL METODO BUILD: Questo è l'inizializzatore dello stato.
-  // All'avvio dell'app, lo stato dell'utente è 'null' (nessuno è loggato).
   @override
   Future<UserModel?> build() async {
     return null;
   }
 
-  // 3. IL METODO LOGIN: La funzione che la pagina di Login chiamerà.
+  // --- LOGIN ---
   Future<void> login(String email, String password) async {
-    // Diciamo alla UI: "Ehi, sto caricando!" (Farà apparire il cerchietto).
     state = const AsyncLoading();
 
-    // 'guard' è una funzione di Riverpod che cattura gli errori automaticamente.
     state = await AsyncValue.guard(() async {
-      // Chiamiamo il Repository che abbiamo creato prima.
       final response = await ref.read(authRepositoryProvider).login(email, password);
 
-      // 1. ESTRAIAMO IL TOKEN: Lo prendiamo dal JSON che ci manda NestJS
+      // 🚨 RADAR: Stampiamo cosa ci manda VERAMENTE il backend!
+      print("🚀 DEBUG LOGIN RESPONSE: ${response.data}");
+
+      // 1. ESTRAIAMO E SALVIAMO IL TOKEN
       final token = response.data['access_token'];
-      
-      // 2. SALVIAMO IL TOKEN: Lo mettiamo nella cassaforte globale
-      ref.read(tokenProvider.notifier).state = token;
+      if (token != null) {
+        ref.read(tokenProvider.notifier).state = token;
+      }
 
-      // Trasformiamo il JSON ricevuto dal backend NestJS in un oggetto UserModel.
-      final user = UserModel.fromJson(response.data);
+      // 2. ESTRAZIONE SICURA DELL'UTENTE
+      // Se esiste l'oggetto 'user' lo prendiamo, altrimenti usiamo la risposta intera
+      Map<String, dynamic> userData = response.data['user'] ?? response.data;
 
-      // Qui in futuro salveremo il token nel telefono per non dover rifare il login.
+      // Se NestJS ha messo il 'tenantId' fuori dall'oggetto 'user' (nella radice),
+      // lo infiliamo a forza dentro 'userData' prima di passarlo al traduttore!
+      if (response.data['tenantId'] != null && userData['tenantId'] == null) {
+        userData['tenantId'] = response.data['tenantId'];
+      }
 
-      return user; // Lo stato diventa l'utente loggato!
+      return UserModel.fromJson(userData);
     });
   }
 
-  // 4. LOGOUT: Semplice e pulito.
+  // --- LOGOUT ---
   void logout() {
-
-    // 1. Distruggiamo il braccialetto VIP (Svuotiamo la cassaforte)
     ref.read(tokenProvider.notifier).clearToken();
-
-    // 2. Diciamo all'app che l'utente non c'è più
     state = const AsyncData(null);
   }
 
-  //5: REGISTRAZIONE
-  // Riceviamo i 4 campi che il tuo Backend si aspetta nel RegisterDto
+  // --- REGISTRAZIONE ---
   Future<void> register({
     required String email,
     required String password,
     required String name,
     required String restaurantName
   }) async {
-    // 1. STATO DI CARICAMENTO: Diciamo all'app di mostrare il cerchietto.
-    // Questo blocca il pulsante "Registrati" per evitare click multipli.
     state = const AsyncLoading();
 
-    // 2. ESECUZIONE PROTETTA: Usiamo AsyncValue.guard per catturare eventuali errori (es. email duplicata)
     state = await AsyncValue.guard(() async {
-        // A. CHIAMATA AL BACKEND: Chiediamo al Repository di creare il Tenant e l'Owner
+        // A. CHIAMATA AL BACKEND
         await ref.read(authRepositoryProvider).register(
           email: email,
           password: password,
@@ -76,16 +70,25 @@ class AuthController extends AsyncNotifier<UserModel?> {
           restaurantName: restaurantName,
         );
     
-        // B. LOGIN AUTOMATICO: Una volta creato l'utente, dobbiamo ottenere il "badge" (JWT)
-        // Chiamiamo il metodo login che abbiamo già scritto.
+        // B. LOGIN AUTOMATICO
         final loginResponse = await ref.read(authRepositoryProvider).login(email, password);
+        
+        // 🚨 RADAR: Stampiamo la risposta del login automatico!
+        print("🚀 DEBUG REGISTER RESPONSE: ${loginResponse.data}");
 
-        // C. TRASFORMAZIONE: Prendiamo il JSON della risposta del login e lo trasformiamo nel Modello
-        final user = UserModel.fromJson(loginResponse.data);
+        final token = loginResponse.data['access_token'];
+        if (token != null) {
+          ref.read(tokenProvider.notifier).state = token;
+        }
 
-        // D. FINE: Restituiamo l'utente. Riverpod aggiornerà lo stato e il Router ci porterà in Home!
-        return user;
+        // C. ESTRAZIONE SICURA DELL'UTENTE (Come nel Login)
+        Map<String, dynamic> userData = loginResponse.data['user'] ?? loginResponse.data;
+
+        if (loginResponse.data['tenantId'] != null && userData['tenantId'] == null) {
+          userData['tenantId'] = loginResponse.data['tenantId'];
+        }
+
+        return UserModel.fromJson(userData);
       });
-  
     }
-}   
+}

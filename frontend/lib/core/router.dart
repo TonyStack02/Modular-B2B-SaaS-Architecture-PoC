@@ -7,6 +7,7 @@ import '../features/auth/presentation/login_screen.dart';
 import '../features/dashboard/presentation/home_screen.dart'; 
 import '../features/catalog/presentation/catalog_screen.dart';
 import '../features/pos/presentation/pos_screen.dart';
+import '../features/floor_plan/presentation/floor_plan_screen.dart';
 import 'navigation/scaffold_with_nav_bar.dart'; 
 
 
@@ -62,10 +63,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CatalogScreen(),
       ),
 
+      GoRoute(
+        path: '/floor-plan',
+        builder: (context, state) => const FloorPlanScreen(),
+      ),
+
       // La Cassa (POS)
       GoRoute(
-        path: '/pos',
-        builder: (context, state) => const PosScreen(),
+        path: '/pos/:resourceId',
+        builder: (context, state) {
+          // Estraiamo l'ID dall'URL e lo passiamo alla pagina!
+          final resourceId = state.pathParameters['resourceId']!;
+          return PosScreen(resourceId: resourceId);
+        }
       ),
 
       // La "Shell" con la BottomNavBar

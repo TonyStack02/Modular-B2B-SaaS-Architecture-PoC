@@ -18,9 +18,9 @@ class UserModel {
     return UserModel(
       // Usiamo ?.toString() per assicurarci che diventi testo.
       // E usiamo ?? '' (oppure ?? 'OWNER') per dare un piano B se il dato è null!
-      id: json['id']?.toString() ?? '',
-      email: json['email']?.toString() ?? '',
-      tenantId: json['tenantId']?.toString() ?? '', 
+      id: json['id'].toString(),
+      email: json['email'].toString(),
+      tenantId: json['tenantId'].toString(), 
       role: json['role']?.toString() ?? 'OWNER', 
     );
   }

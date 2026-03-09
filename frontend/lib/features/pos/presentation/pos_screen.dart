@@ -7,7 +7,9 @@ import '../../catalog/presentation/catalog_controller.dart';
 import 'cart_controller.dart';
 
 class PosScreen extends ConsumerWidget {
-  const PosScreen({super.key});
+  final String resourceId;
+
+  const PosScreen({super.key, required this.resourceId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -81,8 +83,8 @@ class PosScreen extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                       ),
                       onPressed: () async {
-                        // INVIAMO L'ORDINE! (Passiamo null come tavolo per ora)
-                        final success = await ref.read(cartProvider.notifier).checkout(ref, /*resourceId *//*resourceId temporaneo -->*/'051d368c-6814-4d79-8811-088e82e75c84');
+                        // INVIAMO L'ORDINE! 
+                        final success = await ref.read(cartProvider.notifier).checkout(ref, resourceId);
                         
                         if (success && context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/features/auth/presentation/auth_controller.dart';
 import 'dashboard_controller.dart';
+import '../../floor_plan/presentation/floor_plan_controller.dart'; // Per leggere i tavoli
 
 // Usiamo ConsumerWidget invece di StatelessWidget perché abbiamo bisogno di 'ref'
 // per parlare con i nostri Provider (il ponte verso il backend).
@@ -95,7 +96,7 @@ class HomeScreen extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: Colors.orange,
                       ),
-                      onPressed: () => context.push('/pos'), // <-- Va al POS
+                      onPressed: () => _showTableSelection(context), // <-- Va al POS
                       icon: const Icon(Icons.add_shopping_cart, size: 28, color: Colors.white),
                       label: const Text("NUOVO ORDINE", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
@@ -111,6 +112,19 @@ class HomeScreen extends ConsumerWidget {
                       onPressed: () => context.push('/catalog'), // <-- Va al CATALOGO
                       icon: const Icon(Icons.edit_document, size: 28, color: Colors.white),
                       label: const Text("GESTIONE MENU", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                    ),
+
+                    const SizedBox(height: 16), // Spazio tra i due bottoni
+
+                    // 🗺️ BOTTONE 3: GESTIONE TAVOLI E AREE
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.indigo, // Un bel colore per la mappa
+                      ),
+                      onPressed: () => context.push('/floor-plan'), // <-- Va alle Aree
+                      icon: const Icon(Icons.table_restaurant, size: 28, color: Colors.white),
+                      label: const Text("MAPPA TAVOLI", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                   ],
                 ),
@@ -151,6 +165,72 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  // --- LA TENDINA PER SCEGLIERE IL TAVOLO ---
+  void _showTableSelection(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        // Usiamo un Consumer per leggere i dati della Mappa in tempo reale
+        return Consumer(
+          builder: (context, ref, child) {
+            final floorState = ref.watch(floorPlanControllerProvider);
+
+            return floorState.when(
+              loading: () => const SizedBox(height: 200, child: Center(child: CircularProgressIndicator(color: Colors.orange))),
+              error: (e, stack) => Center(child: Text("Errore: $e")),
+              data: (data) {
+                final areas = data.areas;
+                final resources = data.resources;
+
+                if (resources.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: Text("Nessun tavolo disponibile!\nCreane uno dalla Mappa Tavoli.", textAlign: TextAlign.center, style: TextStyle(fontSize: 18)),
+                  );
+                }
+
+                return Column(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text("Seleziona il Tavolo 👇", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: areas.length,
+                        itemBuilder: (context, index) {
+                          final area = areas[index];
+                          final tableInArea = resources.where((r) => r.areaId == area.id).toList();
+                          
+                          if (tableInArea.isEmpty) return const SizedBox.shrink();
+
+                          return ExpansionTile(
+                            initiallyExpanded: true,
+                            title: Text(area.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            children: tableInArea.map((table) => ListTile(
+                              leading: const Icon(Icons.table_restaurant, color: Colors.orange),
+                              title: Text(table.name),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () {
+                                Navigator.pop(context); // Chiudiamo la tendina
+                                context.push('/pos/${table.id}'); // E ANDIAMO IN CASSA CON L'ID VERO!
+                              },
+                            )).toList(),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 }
