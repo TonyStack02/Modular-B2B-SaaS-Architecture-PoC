@@ -81,22 +81,38 @@ class HomeScreen extends ConsumerWidget {
                 ),
 
                 const SizedBox(height: 24,),
+
+                // INIZIO AZIONI RAPIDE
                 const Text("Azioni Rapide ⚡", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
                 const SizedBox(height: 16,),
 
-                // PULSANTE AZIONE: Un grande classico di Flutter.
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.orange, // Colore del brand Juicy
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () {
-                    context.push('/catalog'); 
-                  },
-                  icon: const Icon(Icons.add_shopping_cart, size: 28),
-                  label: const Text("NUOVO ORDINE", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // 🛒 BOTTONE 1: LA CASSA (Per vendere)
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.orange,
+                      ),
+                      onPressed: () => context.push('/pos'), // <-- Va al POS
+                      icon: const Icon(Icons.add_shopping_cart, size: 28, color: Colors.white),
+                      label: const Text("NUOVO ORDINE", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                    ),
+                    
+                    const SizedBox(height: 16), // Spazio tra i due bottoni
+                    
+                    // 📝 BOTTONE 2: IL RETROBOTTEGA (Per modificare il menu)
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.blueGrey, // Colore diverso per distinguerlo
+                      ),
+                      onPressed: () => context.push('/catalog'), // <-- Va al CATALOGO
+                      icon: const Icon(Icons.edit_document, size: 28, color: Colors.white),
+                      label: const Text("GESTIONE MENU", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                    ),
+                  ],
                 ),
               ],
             ),

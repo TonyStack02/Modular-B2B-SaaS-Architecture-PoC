@@ -1,5 +1,5 @@
 // backend/src/guest/dto/create-order.dto.ts
-import { IsArray, IsInt, IsNotEmpty, IsUUID, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsInt, IsNotEmpty, IsOptional, IsUUID, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class OrderItemDto {

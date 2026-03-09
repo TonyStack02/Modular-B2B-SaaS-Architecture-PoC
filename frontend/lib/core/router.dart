@@ -6,6 +6,7 @@ import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/dashboard/presentation/home_screen.dart'; 
 import '../features/catalog/presentation/catalog_screen.dart';
+import '../features/pos/presentation/pos_screen.dart';
 import 'navigation/scaffold_with_nav_bar.dart'; 
 
 
@@ -59,6 +60,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/catalog',
         builder: (context, state) => const CatalogScreen(),
+      ),
+
+      // La Cassa (POS)
+      GoRoute(
+        path: '/pos',
+        builder: (context, state) => const PosScreen(),
       ),
 
       // La "Shell" con la BottomNavBar
