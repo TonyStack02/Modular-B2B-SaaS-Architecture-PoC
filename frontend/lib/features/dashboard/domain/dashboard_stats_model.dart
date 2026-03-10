@@ -13,7 +13,7 @@ class DashboardStatsModel {
   factory DashboardStatsModel.fromJson(Map<String, dynamic> json){
     return DashboardStatsModel(
       activeOrders: json['activeOrders'] ?? 0,
-      todayIncome: (json['todayIncome'] ?? 0).toDouble()
+      todayIncome: double.tryParse(json['todayIncome'].toString()) ?? 0.0
     );
   }
 }
