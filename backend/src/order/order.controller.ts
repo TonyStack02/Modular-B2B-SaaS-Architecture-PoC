@@ -10,6 +10,24 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
+  // 📊 LA PORTA PER LA DASHBOARD FLUTTER
+  @Get('stats')
+  async getDashboardStats(@Request() req) {
+    const tenantId = req.user.tenantId;
+    
+    // Chiamiamo i due metodi del service in parallelo per non perdere tempo
+    const [income, activeOrders] = await Promise.all([
+      this.orderService.getTodayIncome(tenantId),
+      this.orderService.countActiveOrders(tenantId)
+    ]);
+
+    // Restituiamo ESATTAMENTE la forma JSON che il tuo DashboardStatsModel in Flutter si aspetta
+    return {
+      todayIncome: income,
+      activeOrders: activeOrders
+    };
+  }
+
   // Mario vede la lista ordini: GET /order
   @Get()
   findAll(@Request() req) {

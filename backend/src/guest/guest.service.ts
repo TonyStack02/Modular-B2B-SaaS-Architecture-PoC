@@ -53,40 +53,47 @@ export class GuestService {
 
 
   //4. Funzione complessa per creare un ordine
-  async createOrder(dto : CreateOrderDto){
-    //Passaggio da Pro: Recuperiamo i prezzi aggiornati dei prodotti dal DB.
-    // Non vogliamo che un utente cattivo ci mandi un ordine con prezzo 0!
+  async createOrder(dto: CreateOrderDto) {
+    // Recuperiamo i prezzi aggiornati dei prodotti dal DB.
     const productIds = dto.items.map(item => item.productId);
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds } }
     });
 
-  // Creiamo l'ordine e gli elementi dell'ordine (OrderItem) in un'unica operazione (Transazione)
+    let calculatedTotal = 0;
+
+    // Prepariamo la lista dei prodotti e calcoliamo il totale strada facendo
+    const orderItemsData = dto.items.map(item => {
+      const product = products.find(p => p.id === item.productId);
+      if (!product) throw new NotFoundException(`Prodotto ${item.productId} non trovato`);
+
+      // Aggiungiamo al totale: (prezzo della pizza * quantità)
+      calculatedTotal += Number(product.price) * item.quantity;
+
+      return {
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: product.price, 
+      };
+    });
+
+    // Creiamo l'ordine passando finalmente il TOTALE calcolato!
     const order = await this.prisma.order.create({
       data: {
         tenantId: dto.tenantId,
         resourceId: dto.resourceId,
-        status: 'OPEN', // L'ordine nasce aperto
+        status: 'OPEN',
+        totalAmount: calculatedTotal, // <--- 💸 ECCO I SOLDI VERI!
         items: {
-          // 'create' dentro 'items' dice a Prisma di creare automaticamente i record nella tabella OrderItem
-          create: dto.items.map(item => {
-            // Cerchiamo il prezzo originale nel database per il prodotto corrente
-            const product = products.find(p => p.id === item.productId);
-            if (!product) throw new NotFoundException(`Prodotto ${item.productId} non trovato`);
-
-            return {
-              productId: item.productId,
-              quantity: item.quantity,
-              unitPrice: product.price, // Salviamo il prezzo storico come previsto dallo schema
-            };
-          }),
+          create: orderItemsData, // Usiamo la lista che abbiamo preparato sopra
         },
       },
-      // Chiediamo a Prisma di restituirci l'ordine includendo anche i dettagli appena creati
       include: { items: true }
     });
-    // 2. MAGIA: Inviamo la notifica in tempo reale all'Owner!
-    this.orderGateway.sendNewOrderNotification (order.tenantId, order);
+
+    // MAGIA: Inviamo la notifica in tempo reale all'Owner!
+    this.orderGateway.sendNewOrderNotification(order.tenantId, order);
+    
     return order;
   }
 }
