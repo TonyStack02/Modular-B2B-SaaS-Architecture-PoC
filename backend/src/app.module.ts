@@ -10,9 +10,10 @@ import { ResourceModule } from './resource/resource.module';
 import { OrderModule } from './order/order.module';
 import { StripeModule } from './stripe/stripe.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { BookingModule } from './booking/booking.module';
 
 @Module({
-  imports: [GuestModule, AuthModule, CatalogModule, AreaModule, ResourceModule, OrderModule, StripeModule, DashboardModule],
+  imports: [GuestModule, AuthModule, CatalogModule, AreaModule, ResourceModule, OrderModule, StripeModule, DashboardModule, BookingModule],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })

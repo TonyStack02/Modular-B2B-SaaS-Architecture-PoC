@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/auth/presentation/register_screen.dart';
+import 'package:frontend/features/booking/presentation/calendar_screen.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/login_screen.dart';
@@ -101,7 +102,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/calendar',
-                builder: (context, state) => const Center(child: Text('Calendario - Mappa Tavoli')),
+                builder: (context, state) => const CalendarScreen(),
               ),
             ],
           ),

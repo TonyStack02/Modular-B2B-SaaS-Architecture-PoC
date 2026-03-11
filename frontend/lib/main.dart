@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router.dart';
+import 'package:intl/date_symbol_data_local.dart'; // Ottimo, l'avevi già messo!
 
-void main() {
-  // ProviderScope gestisce lo stato di tutti i nostri provider
+// 1. Aggiungiamo 'async' perché dobbiamo ASPETTARE che carichi la lingua
+void main() async {
+  // 2. Fondamentale: diciamo a Flutter di preparare il suo motore interno
+  // PRIMA di fare operazioni asincrone, altrimenti va in crash
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 3. 🇮🇹 Carichiamo il calendario in italiano!
+  await initializeDateFormatting('it_IT', null);
+
+  // 4. Ora possiamo lanciare l'app in sicurezza
   runApp(const ProviderScope(child: JuicyApp()));
 }
 
-class JuicyApp extends ConsumerWidget { // ConsumerWidget permette di leggere i provider
+class JuicyApp extends ConsumerWidget { 
   const JuicyApp({super.key});
 
   @override

@@ -69,13 +69,25 @@ class HomeScreen extends ConsumerWidget {
                 // così le card non escono dallo schermo (Overflow).
                 Row(
                   children: [
+                    // 💸 PRIMA CARD: INCASSO
                     Expanded(
                       child: _buildStatCard(
-                        title: "Ordini Attivi",
-                        // toStringAsFixed(2) trasforma 150.5 in "150.50" (formato valuta)
+                        title: "Incasso Oggi",
                         value: "€${stats.todayIncome.toStringAsFixed(2)}",
                         icon: Icons.euro,
                         color: Colors.green,
+                      ),
+                    ),
+                    
+                    const SizedBox(width: 16), // Spazio tra le due card
+                    
+                    // 🧾 SECONDA CARD: ORDINI ATTIVI
+                    Expanded(
+                      child: _buildStatCard(
+                        title: "Ordini Attivi",
+                        value: "${stats.activeOrders}",
+                        icon: Icons.receipt_long,
+                        color: Colors.orange,
                       ),
                     ),
                   ],

@@ -108,21 +108,25 @@ model Product {
 // --- 4. PRENOTAZIONI (Il futuro) ---
 
 model Booking {
-  id        String   @id @default(uuid())
-  dateTime  DateTime // Data e ora prenotazione
-  guests    Int      @default(2)
-  status    String   @default("CONFIRMED") // PENDING, CONFIRMED, CANCELLED
+  id            String   @id @default(uuid())
+  dateTime      DateTime // Data e ora prenotazione
+  guests        Int      @default(2)
+  status        String   @default("CONFIRMED") // PENDING, CONFIRMED, CANCELLED
 
-  userId    String?  // Chi ha prenotato (opzionale se presa al telefono)
-  user      User?    @relation(fields: [userId], references: [id])
+  // 🚨 NUOVI CAMPI AGGIUNTI: Per le prenotazioni telefoniche o guest senza account
+  customerName  String?  // Nome di chi prenota
+  customerEmail String?  // Email (opzionale)
+  customerPhone String?  // Telefono (opzionale, ma utilissimo)
 
-  resourceId String? // Quale tavolo/ombrellone
-  resource   Resource? @relation(fields: [resourceId], references: [id])
+  userId        String?  // Chi ha prenotato (se è un utente registrato sull'app)
+  user          User?    @relation(fields: [userId], references: [id])
 
-  tenantId  String
-  tenant    Tenant @relation(fields: [tenantId], references: [id])
+  resourceId    String?  // Quale tavolo/ombrellone (può essere assegnato dopo)
+  resource      Resource? @relation(fields: [resourceId], references: [id])
+
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id])
 }
-
 // --- 5. ORDINI E CONTI (Il presente) ---
 
 enum OrderStatus {

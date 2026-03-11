@@ -19,7 +19,7 @@ class DashboardRepository {
   // Il metodo che chiama il nostro nuovo Direttore d'Orchestra nel backend
   Future<DashboardStatsModel> getStats() async {
     // La chiamata all'endpoint
-    final response = await _dio.get('/dashboard/stats');
+    final response = await _dio.get('/order/stats');
 
     // Passiamo i dati al nostro "traduttore"
     return DashboardStatsModel.fromJson(response.data);
