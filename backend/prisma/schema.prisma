@@ -32,6 +32,7 @@ model Tenant {
   orders     Order[]
   bookings   Booking[]
   mapElements MapElement[]
+  employees   Employee[]
 }
 
 model User {
@@ -44,6 +45,8 @@ model User {
   // Se è STAFF o OWNER, appartiene a un Tenant. Se è CLIENT, questo può essere null (o legato all'ultimo locale visitato)
   tenantId String?
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  employee    Employee? 
 
   bookings Booking[]
   orders   Order[]
@@ -203,4 +206,62 @@ model MapElement {
   tenantId  String
   // Ricordati di aggiungere `mapElements MapElement[]` nel model Tenant!
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+// --- 7. GESTIONE DEL PERSONALE (HR) ---
+
+// Definiamo gli stati possibili di un dipendente
+enum EmployeeStatus {
+  ACTIVE      // Lavora regolarmente
+  ON_LEAVE    // È in ferie/malattia a lungo termine
+  TERMINATED  // Licenziato o dimesso (non eliminiamo il record per mantenere lo storico dei costi!)
+}
+
+model Employee {
+  id                  String    @id @default(uuid())
+  
+  // -- ANAGRAFICA BASE --
+  firstName           String    // Nome
+  lastName            String    // Cognome
+  email               String?   // Email (Opzionale, magari il lavapiatti non la usa)
+  phone               String?   // Telefono (Fondamentale per il tasto WhatsApp!)
+  taxCode             String?   // Codice Fiscale
+  jobRole             String    // Il ruolo nel locale (Es: "Capo Sala", "Pizzaiolo")
+
+  // -- CONTRATTO E SCADENZE (Le cose che fanno prendere le multe se scordate) --
+  hireDate            DateTime  @default(now()) // Data di assunzione
+  contractEndDate     DateTime? // Se è a tempo determinato, mettiamo la scadenza qui
+  haccpExpiry         DateTime? // Scadenza attestato HACCP
+  medicalCheckExpiry  DateTime? // Scadenza visita medica del lavoro
+
+  // -- COSTI E ORARI (Per calcolare quanto ci costa a fine mese) --
+  hourlyWage          Decimal   @default(0.00) @db.Decimal(10, 2) // Quanto lo paghiamo all'ora netti/lordi
+  weeklyContractHours Int       @default(40) // Quante ore DEVE fare a settimana da contratto
+
+  // -- EMERGENZE E ACCESSO --
+  emergencyContact    String?   // Es: "Moglie - 3331234567"
+  pinCode             String?   // Un PIN di 4/5 cifre che userà per timbrare sul tablet
+  notes               String?   // Note libere (Es: "Allergico alle noci", "Disponibile solo sera")
+
+  // -- SALDI FERIE E PERMESSI --
+  // Usiamo Float così possiamo segnare anche mezza giornata (0.5)
+  vacationDaysTotal   Float     @default(0) // Quanti giorni di ferie ha accumulato
+  sickDaysTotal       Float     @default(0) // Giorni di malattia presi nell'anno
+
+  // -- STATO ATTUALE --
+  status              EmployeeStatus @default(ACTIVE)
+
+  // -- RELAZIONI (I collegamenti con il resto dell'app) --
+  
+  // 1. A quale locale appartiene?
+  tenantId            String
+  tenant              Tenant    @relation(fields: [tenantId], references: [id])
+
+  // 2. Collegamento con l'App: Se il dipendente si scarica Juicy sul suo telefono 
+  // per vedere i turni, lo leghiamo al suo account "User" (che ha ruolo STAFF).
+  userId              String?   @unique // Unique perché un account User può essere un solo dipendente
+  user                User?     @relation(fields: [userId], references: [id])
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 }

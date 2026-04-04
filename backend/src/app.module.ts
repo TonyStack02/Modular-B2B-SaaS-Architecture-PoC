@@ -12,9 +12,10 @@ import { StripeModule } from './stripe/stripe.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { BookingModule } from './booking/booking.module';
 import { MapElementModule } from './map-element/map-element.module';
+import { EmployeeModule } from './employee/employee.module';
 
 @Module({
-  imports: [GuestModule, AuthModule, CatalogModule, AreaModule, ResourceModule, OrderModule, StripeModule, DashboardModule, BookingModule, MapElementModule],
+  imports: [GuestModule, AuthModule, CatalogModule, AreaModule, ResourceModule, OrderModule, StripeModule, DashboardModule, BookingModule, MapElementModule, EmployeeModule],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })

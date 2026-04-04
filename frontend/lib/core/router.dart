@@ -10,6 +10,8 @@ import '../features/catalog/presentation/catalog_screen.dart';
 import '../features/pos/presentation/pos_screen.dart';
 import '../features/floor_plan/presentation/floor_plan_screen.dart';
 import 'navigation/scaffold_with_nav_bar.dart'; 
+import '../features/hr/presentation/management_screen.dart';
+import '../features/hr/presentation/add_employee_screen.dart';
 
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -79,6 +81,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
       ),
 
+      GoRoute(
+        path: '/add-employee',
+        builder: (context, state) => const AddEmployeeScreen(),
+      ),
+
       // La "Shell" con la BottomNavBar
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -122,8 +129,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/management',
-                builder: (context, state) => const Center(child: Text('Gestione - Risorse')),
+                builder: (context, state) => const ManagementScreen(),
               ),
+              
             ],
           ),
 
