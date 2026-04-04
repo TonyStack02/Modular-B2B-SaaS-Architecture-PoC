@@ -1,6 +1,5 @@
 // lib/features/catalog/data/catalog_repository.dart
 
-import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

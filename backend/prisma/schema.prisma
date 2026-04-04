@@ -26,11 +26,12 @@ model Tenant {
   // Relazioni
   users      User[]
   areas      Area[]
-  reources    Resource[]
+  resources    Resource[]
   categories Category[]
   products   Product[]
   orders     Order[]
   bookings   Booking[]
+  mapElements MapElement[]
 }
 
 model User {
@@ -58,6 +59,12 @@ model Area {
   tenant   Tenant @relation(fields: [tenantId], references: [id])
 
   resources Resource[]
+
+  //Per disegnare il box dell'area sulla mappa
+  positionX Float    @default(0.0)
+  positionY Float    @default(0.0)
+  width     Float    @default(400.0) 
+  height    Float    @default(300.0)
 }
 
 model Resource {
@@ -74,6 +81,14 @@ model Resource {
 
   bookings  Booking[]
   orders    Order[]
+
+  // 📍 NUOVI CAMPI PER LA MAPPA INTERATTIVA (DRAG & DROP)
+  positionX Float @default(0.0)
+  positionY Float @default(0.0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+  
 }
 
 // --- 3. MENU E PRODOTTI (Cosa si vende) ---
@@ -164,4 +179,28 @@ model OrderItem {
 
   productId String
   product   Product @relation(fields: [productId], references: [id])
+}
+
+// --- 6. DECORAZIONI DELLA MAPPA (Muri, Porte, Testi liberi) ---
+model MapElement {
+  id        String   @id @default(uuid())
+  
+  // Può essere "WALL" (muro), "DOOR" (porta) o "TEXT" (testo)
+  type      String   
+  
+  // Se è un testo, salviamo cosa c'è scritto (es. "Bagni"). Per i muri sarà null.
+  text      String?  
+  
+  // Coordinate e Dimensioni
+  positionX Float
+  positionY Float
+  width     Float
+  height    Float
+  
+  // Rotazione (in futuro per fare i muri in diagonale!)
+  rotation  Float    @default(0.0)
+
+  tenantId  String
+  // Ricordati di aggiungere `mapElements MapElement[]` nel model Tenant!
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
 }

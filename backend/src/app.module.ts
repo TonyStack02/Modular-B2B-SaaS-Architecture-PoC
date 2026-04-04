@@ -11,9 +11,10 @@ import { OrderModule } from './order/order.module';
 import { StripeModule } from './stripe/stripe.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { BookingModule } from './booking/booking.module';
+import { MapElementModule } from './map-element/map-element.module';
 
 @Module({
-  imports: [GuestModule, AuthModule, CatalogModule, AreaModule, ResourceModule, OrderModule, StripeModule, DashboardModule, BookingModule],
+  imports: [GuestModule, AuthModule, CatalogModule, AreaModule, ResourceModule, OrderModule, StripeModule, DashboardModule, BookingModule, MapElementModule],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })

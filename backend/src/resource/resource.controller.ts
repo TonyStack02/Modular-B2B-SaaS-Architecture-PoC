@@ -1,8 +1,9 @@
 // backend/src/resource/resource.controller.ts
 
-import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Request, Patch, Param } from '@nestjs/common';
 import { ResourceService } from './resource.service';
 import { CreateResourceDto } from './dto/create-resource.dto';
+import { UpdateResourceDto } from './dto/update-resource.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // Protezione JWT
 
 @Controller('resource')
@@ -21,5 +22,13 @@ export class ResourceController {
   @Get()
   findAll(@Request() req) {
     return this.resourceService.findAll(req.user.tenantId);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id') id: string, 
+    @Body() updateResourceDto: UpdateResourceDto
+  ) {
+    return this.resourceService.update(id, updateResourceDto);
   }
 }

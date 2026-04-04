@@ -16,8 +16,8 @@ class LoginScreen extends ConsumerWidget {
     final authState = ref.watch(authControllerProvider);
 
     // Controller per leggere quello che Mario scrive nei campi di testo
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
+    final emailController = TextEditingController(text: 'gioelegribaudo@gmail.com');
+    final passwordController = TextEditingController(text: 'Juicy!');
 
     return Scaffold(
       body: Padding(

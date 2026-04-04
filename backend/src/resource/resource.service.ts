@@ -3,6 +3,7 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service'; // Per parlare con il DB
 import { CreateResourceDto } from './dto/create-resource.dto';
+import { UpdateResourceDto } from './dto/update-resource.dto';
 
 @Injectable()
 export class ResourceService {
@@ -34,6 +35,21 @@ export class ResourceService {
       where: { tenantId: tenantId },
       include: {
         area: true, // Vediamo anche il nome dell'area di appartenenza
+      },
+    });
+  }
+
+  // 📍 SALVA LE NUOVE COORDINATE NEL DATABASE
+  async update(id: string, dto: UpdateResourceDto) {
+    return await this.prisma.resource.update({
+      // 1. Trova il tavolo con questo ID esatto
+      where: { id: id },
+      // 2. Aggiorna i dati con quelli arrivati da Flutter
+      data: {
+        // Se nel DTO c'è la positionX, aggiornala. Altrimenti ignora.
+        ...(dto.positionX !== undefined && { positionX: dto.positionX }),
+        ...(dto.positionY !== undefined && { positionY: dto.positionY }),
+        ...(dto.name !== undefined && { name: dto.name }),
       },
     });
   }

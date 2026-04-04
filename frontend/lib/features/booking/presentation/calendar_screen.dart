@@ -122,8 +122,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)
                               ),
                               subtitle: Text(
-                                "${booking.guests} Persone" + 
-                                (booking.resourceName != null ? " • ${booking.resourceName}" : ""),
+                                "${booking.guests} Persone${booking.resourceName != null ? " • ${booking.resourceName}" : ""}",
                                 style: const TextStyle(fontSize: 15),
                               ),
                               trailing: const Icon(Icons.chevron_right),

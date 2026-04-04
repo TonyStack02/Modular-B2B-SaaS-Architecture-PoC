@@ -50,7 +50,7 @@ class HomeScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator(color: Colors.orange,),),
 
         // SCENARIO B: Il server è offline o internet non va.
-        error: (error, stack) => Center(child: Text('Errore: ${error}', style: const TextStyle(color: Colors.red),),),
+        error: (error, stack) => Center(child: Text('Errore: $error', style: const TextStyle(color: Colors.red),),),
 
         // SCENARIO C: I dati sono arrivati! 'stats' è l'oggetto DashboardStatsModel.
         data: (stats) {
