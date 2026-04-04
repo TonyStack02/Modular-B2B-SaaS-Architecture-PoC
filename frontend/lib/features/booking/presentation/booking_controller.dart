@@ -42,6 +42,7 @@ class BookingController extends AsyncNotifier<List<BookingModel>> {
     String? customerPhone,
     required int guests,
     required DateTime dateTime,
+    String? resourceId,
   }) async {
     try {
       final data = {
@@ -50,6 +51,7 @@ class BookingController extends AsyncNotifier<List<BookingModel>> {
         'guests': guests,
         // Trasformiamo la data e l'ora nel formato ISO string che NestJS si aspetta!
         'dateTime': dateTime.toIso8601String(), 
+        'resourceId': resourceId,
       };
 
       await ref.read(bookingRepositoryProvider).createBooking(data);

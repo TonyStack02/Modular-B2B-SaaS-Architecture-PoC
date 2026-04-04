@@ -21,6 +21,10 @@ export class CreateOrderDto {
   @IsNotEmpty()
   resourceId: string; // L'ID del tavolo da cui ordinano
 
+  @IsUUID()
+  @IsOptional()
+  customerId?: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)

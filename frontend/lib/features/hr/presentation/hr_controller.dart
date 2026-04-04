@@ -2,20 +2,22 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/employee_repository.dart';
+import '../data/shift_repository.dart'; // 👈 Importiamo il nuovo deposito turni
+import '../domain/shift_model.dart';    // 👈 Importiamo il modello turni
 import '../domain/employee_model.dart';
 
 // 📦 LO STATO DELLA PAGINA HR
-// Creiamo una classe "Scatola" che conterrà tutto quello che serve alla pagina HR.
-// Per ora ha solo la lista dei dipendenti, ma quando faremo il calendario (Step 2),
-// aggiungeremo qui anche la lista dei turni (Shifts), tutto in un unico posto!
 class HrState {
   final List<EmployeeModel> employees;
+  final List<ShiftModel> shifts; // 👈 La scatola ora ha anche il cassetto turni!
 
-  HrState({required this.employees});
+  HrState({
+    required this.employees, 
+    required this.shifts, // Obbligatorio inizializzarli entrambi
+  });
 }
 
 // 🔌 IL PROVIDER
-// Questo è l'interruttore che la UI (la pagina grafica) userà per accendere e parlare con il Controller
 final hrControllerProvider = AsyncNotifierProvider<HrController, HrState>(() {
   return HrController();
 });
@@ -23,96 +25,110 @@ final hrControllerProvider = AsyncNotifierProvider<HrController, HrState>(() {
 // 🧠 IL CERVELLO (Il Controller)
 class HrController extends AsyncNotifier<HrState> {
   
-  // Questa funzione scatta in automatico appena l'Owner apre la pagina "Gestione Personale".
   @override
   Future<HrState> build() async {
-    // Chiamiamo subito la funzione per scaricare i dati dal database
+    // Appena si apre la pagina, carichiamo tutto
     return _fetchData();
   }
 
-  // 1. SCARICA I DATI
+  // 1. SCARICA I DATI (Dipendenti + Turni)
   Future<HrState> _fetchData() async {
-    // Andiamo a bussare al Repository (Il fattorino)
-    final repo = ref.read(employeeRepositoryProvider);
-    // Gli diciamo: "Vai su NestJS e portami la lista dei dipendenti"
-    final employees = await repo.getEmployees();
-    
-    // Mettiamo i dipendenti appena scaricati dentro la nostra "Scatola" e la chiudiamo
-    return HrState(employees: employees);
+    final employeeRepo = ref.read(employeeRepositoryProvider);
+    final shiftRepo = ref.read(shiftRepositoryProvider);
+
+    // Lanciamo le due richieste insieme per risparmiare tempo (Future.wait)
+    // results[0] conterrà i dipendenti, results[1] i turni
+    final results = await Future.wait([
+      employeeRepo.getEmployees(),
+      shiftRepo.getShifts(),
+    ]);
+
+    // Ritorniamo lo stato completo
+    return HrState(
+      employees: results[0] as List<EmployeeModel>,
+      shifts: results[1] as List<ShiftModel>,
+    );
   }
 
-  // 2. CREA UN DIPENDENTE
+  // --- 👥 GESTIONE DIPENDENTI ---
+
   Future<void> addEmployee(Map<String, dynamic> employeeData) async {
-    // Se la pagina non ha ancora caricato i dati, blocchiamo tutto per evitare errori
     if (state.value == null) return;
-
     try {
-      final repo = ref.read(employeeRepositoryProvider);
-      
-      // Chiediamo al backend di creare il dipendente su Prisma.
-      // Il backend ci risponde ridandoci il dipendente appena creato (con il suo ID vero)
-      final newEmployee = await repo.createEmployee(employeeData);
+      final newEmployee = await ref.read(employeeRepositoryProvider).createEmployee(employeeData);
 
-      // Aggiorniamo la RAM del telefono SUBITO, senza dover ricaricare la pagina!
-      // Prendiamo i vecchi dipendenti e ci aggiungiamo quello nuovo in fondo alla lista.
       final currentState = state.value!;
+      // Aggiorniamo la lista dipendenti ma TENIAMO i turni che c'erano già!
       state = AsyncData(HrState(
         employees: [...currentState.employees, newEmployee],
+        shifts: currentState.shifts, 
       ));
     } catch (e) {
-      // Se qualcosa va storto (es. niente internet o errore 500 del server) stampiamo l'errore
-      print("Errore durante la creazione del dipendente: $e");
-      // Qui in futuro potremmo aggiungere un comando per mostrare un popup di errore rosso sulla UI
+      print("Errore creazione dipendente: $e");
     }
   }
 
-  // 3. AGGIORNA UN DIPENDENTE
-  Future<void> updateEmployeeData(String id, Map<String, dynamic> updateData) async {
-    if (state.value == null) return;
-
-    try {
-      // Mandiamo la modifica a NestJS (es. "Cambia lo stipendio a 15€")
-      await ref.read(employeeRepositoryProvider).updateEmployee(id, updateData);
-
-      // Ora dobbiamo aggiornare lo schermo del telefono.
-      // Invece di riscaricare tutti i dipendenti (che consuma giga e rallenta l'app),
-      // cerchiamo il dipendente modificato e gli ricarichiamo i dati "freschi"
-      
-      // NOTA: Per fare un aggiornamento locale perfetto al 100%, la via più semplice 
-      // e sicura in questi casi complessi è richiamare il _fetchData() per risincronizzare
-      // le date e i calcoli complessi del backend. 
-      // È velocissimo e ci evita bug visivi assurdi.
-      state = const AsyncLoading(); // Facciamo apparire la rotellina per un decimo di secondo
-      state = AsyncData(await _fetchData()); // Riscarichiamo la lista aggiornata
-      
-    } catch (e) {
-      print("Errore durante l'aggiornamento del dipendente: $e");
-    }
-  }
-
-  // 4. ELIMINA UN DIPENDENTE
   Future<void> removeEmployee(String id) async {
     if (state.value == null) return;
-    
     final currentState = state.value!;
-
     try {
-      // Prima di chiamare il server, lo facciamo "sparire" subito dallo schermo!
-      // È un trucco visivo (Optimistic UI) che fa sembrare l'app fulminea.
-      // Creiamo una nuova lista tenendo tutti TRANNE quello con l'ID da cancellare
+      // Filtriamo via il dipendente eliminato
       final updatedList = currentState.employees.where((e) => e.id != id).toList();
-      
-      // Aggiorniamo la UI con la lista pulita
-      state = AsyncData(HrState(employees: updatedList));
+      // Aggiorniamo la UI (Tenendo sempre i turni attuali)
+      state = AsyncData(HrState(employees: updatedList, shifts: currentState.shifts));
 
-      // Ora, in background mentre l'Owner non se ne accorge, mandiamo la richiesta di DELETE a NestJS
       await ref.read(employeeRepositoryProvider).deleteEmployee(id);
-      
     } catch (e) {
-      print("Errore durante l'eliminazione: $e");
-      // Se il server rifiuta l'eliminazione (magari la connessione è caduta), 
-      // dovremmo rimettere il dipendente al suo posto richiamando _fetchData().
+      print("Errore eliminazione: $e");
+      state = AsyncData(await _fetchData()); // Se fallisce, ricarichiamo tutto dal server
+    }
+  }
+
+  // --- 📅 GESTIONE TURNI ---
+
+  // Funzione per aggiungere un turno (La useremo tra poco dal Planner)
+  Future<void> addShift(Map<String, dynamic> shiftData) async {
+    if (state.value == null) return;
+    try {
+      final repo = ref.read(shiftRepositoryProvider);
+      final newShift = await repo.createShift(shiftData);
+
+      final currentState = state.value!;
+      // Aggiungiamo il turno e TENIAMO i dipendenti che c'erano già
+      state = AsyncData(HrState(
+        employees: currentState.employees,
+        shifts: [...currentState.shifts, newShift],
+      ));
+    } catch (e) {
+      print("Errore creazione turno: $e");
+    }
+  }
+
+  // Funzione per eliminare un turno
+  Future<void> removeShift(String id) async {
+    if (state.value == null) return;
+    final currentState = state.value!;
+    try {
+      // Togliamo il turno dalla lista locale
+      final updatedShifts = currentState.shifts.where((s) => s.id != id).toList();
+      state = AsyncData(HrState(employees: currentState.employees, shifts: updatedShifts));
+
+      await ref.read(shiftRepositoryProvider).deleteShift(id);
+    } catch (e) {
+      print("Errore eliminazione turno: $e");
       state = AsyncData(await _fetchData());
+    }
+  }
+
+  // Supporto per aggiornare i dati (es. stipendio)
+  Future<void> updateEmployeeData(String id, Map<String, dynamic> updateData) async {
+    if (state.value == null) return;
+    try {
+      await ref.read(employeeRepositoryProvider).updateEmployee(id, updateData);
+      state = const AsyncLoading();
+      state = AsyncData(await _fetchData());
+    } catch (e) {
+      print("Errore aggiornamento: $e");
     }
   }
 }

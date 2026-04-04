@@ -33,6 +33,9 @@ model Tenant {
   bookings   Booking[]
   mapElements MapElement[]
   employees   Employee[]
+  shifts        Shift[]
+  leaves        LeaveRequest[]  
+  customers      Customer[]
 }
 
 model User {
@@ -47,6 +50,7 @@ model User {
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
 
   employee    Employee? 
+  customerProfile Customer? // Collegamento 1-a-1 con la rubrica del ristoratore
 
   bookings Booking[]
   orders   Order[]
@@ -144,6 +148,9 @@ model Booking {
 
   tenantId      String
   tenant        Tenant   @relation(fields: [tenantId], references: [id])
+
+  customerId    String?   // Se è un cliente in rubrica
+  customer      Customer? @relation(fields: [customerId], references: [id])
 }
 // --- 5. ORDINI E CONTI (Il presente) ---
 
@@ -169,6 +176,9 @@ model Order {
   user        User?    @relation(fields: [userId], references: [id])
 
   items       OrderItem[]
+
+  customerId    String?   // Per legare lo scontrino al programma fedeltà!
+  customer      Customer? @relation(fields: [customerId], references: [id])
 }
 
 model OrderItem {
@@ -264,4 +274,73 @@ model Employee {
 
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
+
+  shifts        Shift[]
+  leaves        LeaveRequest[]
+}
+
+// --- 8. GESTIONE TURNI E PIANIFICAZIONE ---
+
+model Shift {
+  id          String   @id @default(uuid())
+  
+  // Quando inizia e quando finisce il turno (Data + Ora)
+  startTime   DateTime
+  endTime     DateTime
+  
+  // Note specifiche per questo turno (es. "Oggi stai in cassa")
+  notes       String?
+  
+  // RELAZIONI
+  // 1. Il dipendente che deve lavorare
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // 2. Il locale
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Modello per Ferie e Permessi
+model LeaveRequest {
+  id          String   @id @default(uuid())
+  type        String   // "VACATION" (Ferie), "SICK" (Malattia), "PERMIT" (Permesso)
+  startDate   DateTime
+  endDate     DateTime
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+// --- 9. RUBRICA CLIENTI (CRM & FEDELTÀ) ---
+
+model Customer {
+  id          String    @id @default(uuid())
+  firstName   String
+  lastName    String?
+  phone       String?   // Il nostro ponte d'oro per unire i dati
+  email       String?
+  notes       String?   // Es: "Allergico al glutine"
+
+  // 🌉 IL PONTE: Se il cliente si scarica l'app Juicy, colleghiamo qui il suo account User
+  userId      String?   @unique 
+  user        User?     @relation(fields: [userId], references: [id])
+
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+
+  bookings    Booking[]
+  orders      Order[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

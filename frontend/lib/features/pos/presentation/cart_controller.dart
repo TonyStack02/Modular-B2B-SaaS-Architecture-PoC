@@ -62,7 +62,7 @@ class CartNotifier extends Notifier<List<CartItemModel>> {
   }
 
 // Invia l'ordine al server
-  Future<bool> checkout(WidgetRef ref, String resourceId) async {
+  Future<bool> checkout(WidgetRef ref, String resourceId, {String? customerId}) async {
     if (state.isEmpty) return false; // Non inviamo ordini vuoti!
 
     try {
@@ -75,6 +75,7 @@ class CartNotifier extends Notifier<List<CartItemModel>> {
       await repository.submitOrder(
         tenantId: user.tenantId,
         resourceId: resourceId , // L'ID del tavolo
+        customerId: customerId,
         items: state, // Tutto il nostro carrello
       );
 

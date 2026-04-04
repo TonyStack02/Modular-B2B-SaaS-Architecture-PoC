@@ -82,6 +82,7 @@ export class GuestService {
       data: {
         tenantId: dto.tenantId,
         resourceId: dto.resourceId,
+        customerId: dto.customerId,
         status: 'OPEN',
         totalAmount: calculatedTotal, // <--- 💸 ECCO I SOLDI VERI!
         items: {

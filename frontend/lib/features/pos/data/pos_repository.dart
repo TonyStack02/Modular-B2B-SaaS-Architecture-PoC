@@ -20,6 +20,7 @@ class PosRepository {
   Future<void> submitOrder({
     required String tenantId,
     required String resourceId,
+    String? customerId, 
     required List<CartItemModel> items,
   }) async {
     
@@ -27,6 +28,7 @@ class PosRepository {
     final payload = {
       'tenantId': tenantId,
       'resourceId': resourceId,
+      'customerId': customerId,
       'items': items.map((cartItem) => {
         'productId': cartItem.product.id,
         'quantity': cartItem.quantity,

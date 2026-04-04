@@ -12,6 +12,7 @@ import '../features/floor_plan/presentation/floor_plan_screen.dart';
 import 'navigation/scaffold_with_nav_bar.dart'; 
 import '../features/hr/presentation/management_screen.dart';
 import '../features/hr/presentation/add_employee_screen.dart';
+import '../features/crm/presentation/add_customer_screen.dart';
 
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -84,6 +85,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/add-employee',
         builder: (context, state) => const AddEmployeeScreen(),
+      ),
+
+      GoRoute(
+        path: '/add-customer',
+        builder: (context, state) => const AddCustomerScreen(),
       ),
 
       // La "Shell" con la BottomNavBar
