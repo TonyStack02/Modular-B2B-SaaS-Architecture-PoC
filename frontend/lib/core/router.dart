@@ -13,6 +13,7 @@ import 'navigation/scaffold_with_nav_bar.dart';
 import '../features/hr/presentation/management_screen.dart';
 import '../features/hr/presentation/add_employee_screen.dart';
 import '../features/crm/presentation/add_customer_screen.dart';
+import '../features/activity/presentation/activity_screen.dart'; 
 
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -125,7 +126,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/activity',
-                builder: (context, state) => const Center(child: Text('Attività - Conti Aperti')),
+                builder: (context, state) => const ActivityScreen(),
               ),
             ],
           ),
@@ -146,7 +147,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/settings',
-                builder: (context, state) => const Center(child: Text('Impostazioni')),
+                builder: (context, state) => Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Impostazioni Generali', style: TextStyle(fontSize: 20)),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      // Il tasto per l'Owner per disegnare la mappa e spostare i tavoli
+                      onPressed: () => context.push('/floor-plan'),
+                      child: const Text('Disegna Mappa Ristorante 🗺️'),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

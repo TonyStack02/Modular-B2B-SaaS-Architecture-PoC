@@ -26,24 +26,21 @@ class CustomerController extends AsyncNotifier<List<CustomerModel>> {
     return await repo.getCustomers(); // Ci facciamo portare la lista
   }
 
-  // AGGIUNGI UN CLIENTE
-  Future<void> addCustomer(Map<String, dynamic> customerData) async {
-    // Evitiamo crash se proviamo ad aggiungere mentre sta ancora caricando la prima volta
-    if (state.value == null) return;
+  // AGGIUNGI UN CLIENTE E RESTITUISCI IL RISULTATO!
+  Future<CustomerModel?> addCustomer(Map<String, dynamic> customerData) async {
+    if (state.value == null) return null;
 
     try {
       final repo = ref.read(customerRepositoryProvider);
-      
-      // Diciamo al backend di crearlo
       final newCustomer = await repo.createCustomer(customerData);
 
-      // Aggiorniamo lo schermo all'istante (Optimistic UI):
-      // Prendiamo la lista vecchia (state.value!) e ci aggiungiamo il nuovo cliente in cima.
       final currentList = state.value!;
       state = AsyncData([newCustomer, ...currentList]); 
       
+      return newCustomer; // 👈 LA MAGIA: Ci facciamo ridare il cliente appena creato!
     } catch (e) {
       print("Errore creazione cliente: $e");
+      return null;
     }
   }
 

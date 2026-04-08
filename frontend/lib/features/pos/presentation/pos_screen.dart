@@ -77,96 +77,23 @@ class PosScreen extends ConsumerWidget {
                         backgroundColor: Colors.orange,
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                       ),
-                      onPressed: () {
-                        // 🚨 INVECE DI INVIARE SUBITO, APRIAMO IL MENU FEDELTÀ!
-                        _showCheckoutOptions(context, ref);
+                      onPressed: () async {
+                        // 🚀 IL CAMERIERE SPARA L'ORDINE IN CUCINA (Anonimo e Aperto)
+                        final success = await ref.read(cartProvider.notifier).checkout(ref, resourceId);
+                        
+                        if (success && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("✅ Ordine inviato!"), backgroundColor: Colors.green),
+                          );
+                          context.pop(); // Chiudiamo il POS e torniamo alla mappa
+                        }
                       },
-                      child: const Text("CONFERMA", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      child: const Text("INVIA ORDINE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                     )
                   ],
                 ),
               ),
             ),
-    );
-  }
-
-  // --- IL POPUP DI CHECKOUT (Anonimo o CRM) ---
-  void _showCheckoutOptions(BuildContext context, WidgetRef ref) {
-    String? selectedCustomerId;
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            // Leggiamo la rubrica in tempo reale
-            final customersState = ref.watch(customerControllerProvider);
-            final customers = customersState.value ?? [];
-
-            return Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text("Chiudi Conto", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-                  const SizedBox(height: 8),
-                  const Text("Vuoi associare questo scontrino a un cliente per il programma fedeltà?", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 24),
-
-                  // SELETTORE CLIENTE DALLA RUBRICA
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      labelText: "Cerca in Rubrica (Opzionale)", 
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.star, color: Colors.orange),
-                    ),
-                    value: selectedCustomerId,
-                    items: customers.map((c) {
-                      return DropdownMenuItem<String>(
-                        value: c.id,
-                        child: Text("${c.firstName} ${c.lastName ?? ''} ${c.phone != null ? '(${c.phone})' : ''}"),
-                      );
-                    }).toList(),
-                    onChanged: (value) => setModalState(() => selectedCustomerId = value),
-                  ),
-                  
-                  const SizedBox(height: 24),
-
-                  // BOTTONE INVIO DEFINITIVO
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.symmetric(vertical: 16)),
-                    onPressed: () async {
-                      // Chiudiamo il popup di selezione
-                      Navigator.pop(context);
-
-                      // INVIAMO L'ORDINE (Passando l'ID cliente se è stato scelto, sennò sarà null!)
-                      final success = await ref.read(cartProvider.notifier).checkout(ref, resourceId, customerId: selectedCustomerId);
-                      
-                      if (success && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("✅ Ordine inviato con successo!"), backgroundColor: Colors.green),
-                        );
-                        context.go('/home'); // Torniamo alla home per vedere l'incasso salire!
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("❌ Errore durante l'invio"), backgroundColor: Colors.red),
-                        );
-                      }
-                    },
-                    child: Text(
-                      selectedCustomerId == null ? "INVIA COME ANONIMO" : "INVIA E ASSEGNA PUNTI", 
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            );
-          }
-        );
-      },
     );
   }
 }

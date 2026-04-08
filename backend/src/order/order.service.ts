@@ -3,59 +3,84 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { SrvRecord } from 'dns';
+// 📡 1. IMPORTIAMO L'ANTENNA (Assicurati che il percorso e il nome del file siano giusti)
+import { OrderGateway } from './order.gateway'; 
 
 @Injectable()
 export class OrderService {
-  constructor(private prisma: PrismaService) {}
+  // 📡 2. INIETTIAMO IL GATEWAY NEL COSTRUTTORE
+  constructor(
+    private prisma: PrismaService, 
+    private orderGateway: OrderGateway 
+  ) {}
 
   // 1. Recupera tutti gli ordini del ristorante (Tenant)
   async findAll(tenantId: string) {
     return this.prisma.order.findMany({
       where: { tenantId: tenantId },
       include: {
-        resource: true, // Vediamo a che tavolo sono
+        resource: true, 
         items: {
-          include: { product: true } // Vediamo cosa hanno ordinato (pizza, birra, ecc.)
+          include: { product: true } 
         }
       },
-      orderBy: { createdAt: 'desc' } // I più recenti in alto
+      orderBy: { createdAt: 'desc' } 
     });
   }
 
-  // 2. Aggiorna lo stato di un ordine (es: Mario segna come "Servito" o "Pagato")
+  // 2. Aggiorna lo stato di un ordine
   async updateStatus(id: string, dto: UpdateOrderStatusDto, tenantId: string) {
-    // 1. Troviamo l'ordine e INCLUDIAMO LE PIZZE E BIRRE (items)
     const order = await this.prisma.order.findFirst({
       where: { id: id, tenantId: tenantId },
-      include: { items: true } // <-- FONDAMENTALE PER CONTARE I SOLDI!
+      include: { items: true } 
     });
 
     if (!order) {
       throw new NotFoundException('Ordine non trovato o non appartenente al tuo ristorante');
     }
 
-    // Partiamo dal totale che c'è già
     let finalTotal: number = Number(order.totalAmount);
+    let finalCustomerId: string | null = order.customerId;
 
-    // 2. MAGIA: Se il cameriere lo sta segnando come PAGATO, chiudiamo il conto!
+    // MAGIA: Calcoliamo il totale e associamo il cliente se ce lo passano
     if (dto.status === 'PAID') {
-      // Facciamo la somma matematica sicura di tutto quello che ha mangiato
       finalTotal = order.items.reduce((somma, item) => {
         return somma + (Number(item.unitPrice) * item.quantity);
       }, 0);
       
-      console.log(`🧾 Chiusura conto per ordine ${id} - Totale calcolato: €${finalTotal}`);
+      if (dto.customerId) {
+         finalCustomerId = dto.customerId;
+         console.log(`💎 Associato cliente VIP ${dto.customerId} all'ordine ${id}`);
+      }
     }
 
-    // 3. Salviamo nel database il nuovo stato E l'incasso definitivo
-    return this.prisma.order.update({
+    // 3. Salviamo l'ordine aggiornato
+    const updatedOrder = await this.prisma.order.update({
       where: { id: id },
       data: { 
         status: dto.status,
-        totalAmount: finalTotal // <-- I SOLDI VENGONO STAMPATI QUI!
+        totalAmount: finalTotal,
+        customerId: finalCustomerId 
       }
     });
+
+    // 4. AGGIORNAMENTO CRM
+    if (dto.status === 'PAID' && finalCustomerId) {
+      await this.prisma.customer.update({
+        where: { id: finalCustomerId },
+        data: {
+          totalOrders: { increment: 1 }, 
+          totalSpent: { increment: finalTotal } 
+        }
+      });
+      console.log(`📈 Statistiche aggiornate per il cliente ${finalCustomerId}! +€${finalTotal}`);
+    }
+
+    // 📣 5. IL MEGAFONO: Urliamo a tutto il ristorante che l'ordine è cambiato!
+    // Usiamo il tenantId come "Stanza" (Room) così i tablet della Pizzeria A non vedono gli ordini della Pizzeria B.
+    this.orderGateway.sendOrderUpdate(tenantId, updatedOrder);
+
+    return updatedOrder;
   }
 
   // Calcola quanti ordini sono ancora aperti oggi
@@ -68,7 +93,7 @@ export class OrderService {
     });
   }
 
-// Calcola l'incasso di oggi
+  // Calcola l'incasso di oggi
   async getTodayIncome(tenantId: string) {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
@@ -84,20 +109,21 @@ export class OrderService {
       }
     });
 
-    // 🚨 RADAR: Stampiamo cosa esce davvero dal database!
-    console.log("💰 INCASSO GREZZO DA PRISMA:", result._sum.totalAmount);
-
-    // Forziamo brutalmente l'oggetto Prisma a diventare un numero normale JavaScript
     return result._sum.totalAmount ? Number(result._sum.totalAmount) : 0;
   }
 
+  // Vecchio metodo per chiusura rapida
   async markAsPaid(orderId: string) {
     console.log(`🛠️ Aggiorno ordine ${orderId} come PAGATO nel database...`);
 
-    return this.prisma.order.update({
+    const updatedOrder = await this.prisma.order.update({
       where: {id: orderId},
       data: {status: 'PAID'}
     });
-  }
 
+    // 📣 MEGAFONO ANCHE QUI per sicurezza, nel caso lo usassi ancora
+    this.orderGateway.sendOrderUpdate(updatedOrder.tenantId, updatedOrder);
+
+    return updatedOrder;
+  }
 }

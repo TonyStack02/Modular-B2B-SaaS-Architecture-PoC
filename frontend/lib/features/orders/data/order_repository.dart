@@ -21,7 +21,19 @@ class OrderRepository {
   }
 
   // Cambia lo stato di un ordine (es. in 'PAID')
-  Future<void> updateOrderStatus(String orderId, String status) async {
-    await _dio.patch('/order/$orderId/status', data: {'status': status});
+  // 🌉 AGGIUNTO: parametro opzionale customerId per il programma fedeltà
+  Future<void> updateOrderStatus(String orderId, String status, {String? customerId}) async {
+    // Prepariamo i dati base (lo stato)
+    final data = <String, dynamic>{
+      'status': status,
+    };
+
+    // Se ci passano anche un cliente (es. durante il pagamento), lo aggiungiamo al pacchetto
+    if (customerId != null) {
+      data['customerId'] = customerId;
+    }
+
+    // Inviamo la PATCH al backend con i dati aggiornati
+    await _dio.patch('/order/$orderId/status', data: data);
   }
 }

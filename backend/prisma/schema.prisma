@@ -331,7 +331,11 @@ model Customer {
   email       String?
   notes       String?   // Es: "Allergico al glutine"
 
-  // 🌉 IL PONTE: Se il cliente si scarica l'app Juicy, colleghiamo qui il suo account User
+  // 💰 I CAMPI PER IL PROGRAMMA FEDELTÀ
+  totalOrders Int       @default(0) // Quante volte è venuto a mangiare
+  totalSpent  Decimal   @default(0.00) @db.Decimal(10, 2) // Quanti soldi ci ha lasciato
+
+  // 🌉 IL PONTE: Se il cliente si scarica l'app Juicy
   userId      String?   @unique 
   user        User?     @relation(fields: [userId], references: [id])
 
