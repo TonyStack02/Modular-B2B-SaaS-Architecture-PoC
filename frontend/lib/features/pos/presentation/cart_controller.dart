@@ -11,81 +11,91 @@ final cartProvider = NotifierProvider<CartNotifier, List<CartItemModel>>(() {
   return CartNotifier();
 });
 
+
 class CartNotifier extends Notifier<List<CartItemModel>> {
   @override
   List<CartItemModel> build() {
-    return []; // All'inizio il carrello è vuoto!
+    return [];
   }
 
-  // Aggiunge un prodotto o aumenta la quantità se c'è già
-  void addProduct(ProductModel product) {
-    // Controlliamo se la pizza è già nello scontrino
-    final existingIndex = state.indexWhere((item) => item.product.id == product.id);
+  // 1. Aggiunge un prodotto o aumenta la quantità se ESISTE GIA' UNA RIGA UGUALE (stesso prodotto, stesse note)
+  void addProduct(ProductModel product, {String? notes}) {
+    // Cerchiamo una riga che abbia lo STESSO prodotto e le STESSE identiche note
+    final existingIndex = state.indexWhere(
+        (item) => item.product.id == product.id && item.notes == notes
+    );
 
     if (existingIndex >= 0) {
-      // Se c'è già, creiamo una nuova lista aggiornando solo la quantità di quella pizza
       final newState = [...state];
       final item = newState[existingIndex];
       newState[existingIndex] = item.copyWith(quantity: item.quantity + 1);
       state = newState;
     } else {
-      // Se è una pizza nuova, aggiungiamo una nuova riga allo scontrino
-      state = [...state, CartItemModel(product: product)];
+      // Se ha note diverse (o è la prima volta), facciamo una riga nuova!
+      state = [...state, CartItemModel(product: product, notes: notes)];
     }
   }
 
-  // Rimuove 1 unità di un prodotto (o cancella la riga se la quantità arriva a 0)
-  void removeProduct(ProductModel product) {
-    final existingIndex = state.indexWhere((item) => item.product.id == product.id);
+  // 2. Rimuove 1 unità di un prodotto
+  void removeProduct(CartItemModel itemToRemove) {
+    // Cerchiamo l'indice ESATTO di quella riga (passiamo tutto l'oggetto CartItemModel per sicurezza)
+    final existingIndex = state.indexOf(itemToRemove);
     if (existingIndex >= 0) {
       final item = state[existingIndex];
       if (item.quantity > 1) {
-        // Riduciamo la quantità
         final newState = [...state];
         newState[existingIndex] = item.copyWith(quantity: item.quantity - 1);
         state = newState;
       } else {
-        // Se la quantità era 1, togliamo completamente la riga dal carrello
-        state = state.where((item) => item.product.id != product.id).toList();
+        removeRow(itemToRemove); // Se arriva a zero, la cancelliamo
       }
     }
   }
 
-  // Svuota completamente il carrello (es. dopo aver inviato l'ordine con successo)
+  // 3. Cancella brutalmente un'intera riga (es. se ho per sbaglio aggiunto 5 birre, premo l'icona del cestino)
+  void removeRow(CartItemModel itemToRemove) {
+    state = state.where((item) => item != itemToRemove).toList();
+  }
+
+  // 4. Aggiorna la nota di una riga esistente
+  void updateNote(CartItemModel itemToUpdate, String newNote) {
+    final existingIndex = state.indexOf(itemToUpdate);
+    if (existingIndex >= 0) {
+      final newState = [...state];
+      newState[existingIndex] = newState[existingIndex].copyWith(notes: newNote);
+      state = newState;
+    }
+  }
+
   void clearCart() {
     state = [];
   }
 
-  // Calcola il totale in Euro di tutto lo scontrino
   double get totalAmount {
     return state.fold(0.0, (sum, item) => sum + item.totalPrice);
   }
 
-// Invia l'ordine al server
   Future<bool> checkout(WidgetRef ref, String resourceId, {String? customerId}) async {
-    if (state.isEmpty) return false; // Non inviamo ordini vuoti!
+    if (state.isEmpty) return false;
 
     try {
-      // 1. Recuperiamo l'ID del ristorante (tenantId) dall'utente attualmente loggato
       final user = ref.read(authControllerProvider).value;
       if (user == null) throw Exception("Utente non loggato");
 
-      // 2. Chiamiamo il fattorino
       final repository = ref.read(posRepositoryProvider);
       await repository.submitOrder(
-        tenantId: user.tenantId,
-        resourceId: resourceId , // L'ID del tavolo
+        tenantId: user.tenantId!,
+        resourceId: resourceId ,
         customerId: customerId,
-        items: state, // Tutto il nostro carrello
+        items: state, 
       );
 
-      // 3. Se va tutto bene, svuotiamo il carrello!
       clearCart();
-      return true; // Ordine inviato con successo!
+      return true;
 
     } catch (e) {
-      print("Errore durante il checkout: $e");
-      return false; // Qualcosa è andato storto
+      print("Errore checkout: $e");
+      return false;
     }
   }
 }

@@ -39,60 +39,62 @@ export class GuestService {
 
   //3. Funzione per creare una prenotazione
   async createBooking(dto : CreateBookingDto){
-    // Usiamo prisma per creare un nuovo record nella tabella 'booking'
     return this.prisma.booking.create({
       data: {
-        dateTime: new Date(dto.dateTime), // Convertiamo la stringa in un oggetto Date di JS
+        dateTime: new Date(dto.dateTime), 
         guests: dto.guests,
         tenantId: dto.tenantId,
-        resourceId: dto.resourceId, // Può essere null se non specificato (opzionale nello schema)
-        // Nota: Nel tuo schema User è opzionale per i Booking, quindi per ora non lo colleghiamo
+        resourceId: dto.resourceId, 
       },
     });
   }
 
-
   //4. Funzione complessa per creare un ordine
   async createOrder(dto: CreateOrderDto) {
-    // Recuperiamo i prezzi aggiornati dei prodotti dal DB.
+    // 1. Estraiamo solo gli ID dei prodotti per fare una singola chiamata al database veloce
     const productIds = dto.items.map(item => item.productId);
+    
+    // 2. Chiediamo al database i prezzi veri (così nessuno può manometterli da Flutter)
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds } }
     });
 
     let calculatedTotal = 0;
 
-    // Prepariamo la lista dei prodotti e calcoliamo il totale strada facendo
+    // 3. Prepariamo i dati esatti come li vuole Prisma per la tabella OrderItem
     const orderItemsData = dto.items.map(item => {
+      // Troviamo il prodotto corrispondente nel database
       const product = products.find(p => p.id === item.productId);
       if (!product) throw new NotFoundException(`Prodotto ${item.productId} non trovato`);
 
-      // Aggiungiamo al totale: (prezzo della pizza * quantità)
+      // Calcoliamo quanti soldi aggiungere al totale
       calculatedTotal += Number(product.price) * item.quantity;
 
+      // 📝 Creiamo la riga per lo scontrino
       return {
         productId: item.productId,
         quantity: item.quantity,
-        unitPrice: product.price, 
+        unitPrice: product.price, // Salviamo il prezzo "storico" al momento dell'ordine
+        notes: item.notes, // <--- MAGIA: Trasferiamo le note da Flutter direttamente al Database!
       };
     });
 
-    // Creiamo l'ordine passando finalmente il TOTALE calcolato!
+    // 4. Creiamo l'ordine finale nel database con tutti i pezzi uniti
     const order = await this.prisma.order.create({
       data: {
         tenantId: dto.tenantId,
         resourceId: dto.resourceId,
         customerId: dto.customerId,
         status: 'OPEN',
-        totalAmount: calculatedTotal, // <--- 💸 ECCO I SOLDI VERI!
+        totalAmount: calculatedTotal, // Il totale che abbiamo appena calcolato
         items: {
-          create: orderItemsData, // Usiamo la lista che abbiamo preparato sopra
+          create: orderItemsData, // Passiamo la lista di oggetti creata al passaggio 3
         },
       },
-      include: { items: true }
+      include: { items: true } // Diciamo a Prisma di restituirci anche gli items appena creati
     });
 
-    // MAGIA: Inviamo la notifica in tempo reale all'Owner!
+    // 5. Il megafono: svegliamo la cassa in tempo reale per far diventare rosso il tavolo
     this.orderGateway.sendNewOrderNotification(order.tenantId, order);
     
     return order;

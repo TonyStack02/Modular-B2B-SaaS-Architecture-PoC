@@ -5,10 +5,12 @@ import '../../catalog/domain/product_model.dart';
 class CartItemModel {
   final ProductModel product;
   final int quantity;
+  final String? notes;
 
   CartItemModel({
     required this.product,
-    this.quantity = 1 // Di base, quando aggiungo un prodotto, la quantità è 1
+    this.quantity = 1, // Di base, quando aggiungo un prodotto, la quantità è 1
+    this.notes
   });
 
   // Un metodo comodo per calcolare il totale di questa riga (es. 2 Margherite x 6.50€ = 13.00€)
@@ -16,10 +18,12 @@ class CartItemModel {
   
   // Un metodo per creare una copia di questo oggetto con una quantità diversa 
   // (Riverpod preferisce oggetti immutabili)
-  CartItemModel copyWith({int? quantity}) {
+  CartItemModel copyWith({int? quantity, String? notes}) {
     return CartItemModel(
       product: product,
-      quantity: quantity ?? this.quantity
+      quantity: quantity ?? this.quantity,
+      // Se mi passi una stringa vuota, cancello la nota. Se mi passi null, tengo la vecchia.
+      notes: notes != null ? (notes.isEmpty ? null : notes) : this.notes,
     );
   }
   

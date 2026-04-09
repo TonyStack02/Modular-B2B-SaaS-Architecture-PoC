@@ -60,7 +60,8 @@ export class OrderService {
       data: { 
         status: dto.status,
         totalAmount: finalTotal,
-        customerId: finalCustomerId 
+        customerId: finalCustomerId,
+        closedAt: dto.status === 'PAID' ? new Date() : undefined
       }
     });
 

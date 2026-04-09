@@ -32,6 +32,7 @@ class PosRepository {
       'items': items.map((cartItem) => {
         'productId': cartItem.product.id,
         'quantity': cartItem.quantity,
+        'notes': cartItem.notes,
       }).toList(),
     };
 

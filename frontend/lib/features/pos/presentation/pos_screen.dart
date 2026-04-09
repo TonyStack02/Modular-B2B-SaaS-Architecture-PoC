@@ -2,10 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../catalog/presentation/catalog_controller.dart';
-import '../../crm/presentation/customer_controller.dart'; 
 import 'cart_controller.dart';
+import 'widgets/cart_drawer.dart'; 
 
 class PosScreen extends ConsumerWidget {
   final String resourceId;
@@ -16,12 +15,36 @@ class PosScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final catalogState = ref.watch(catalogControllerProvider);
     final cartItems = ref.watch(cartProvider);
-    final totalAmount = ref.read(cartProvider.notifier).totalAmount;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nuovo Ordine 🛒', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Menu 🍕', style: TextStyle(fontWeight: FontWeight.bold)),
+        actions: [
+          // 🛒 L'ICONA DEL CARRELLO CON IL NUMERO DI PRODOTTI
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Badge(
+              label: Text(cartItems.length.toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
+              isLabelVisible: cartItems.isNotEmpty,
+              backgroundColor: Colors.red,
+              child: Builder(
+                builder: (context) {
+                  return IconButton(
+                    icon: const Icon(Icons.shopping_cart, size: 28),
+                    onPressed: () {
+                      // Apre il menu laterale di destra
+                      Scaffold.of(context).openEndDrawer();
+                    },
+                  );
+                }
+              ),
+            ),
+          ),
+        ],
       ),
+      
+      // 🚀 IL NOSTRO NUOVO SUPER CARRELLO LATERALE
+      endDrawer: CartDrawer(resourceId: resourceId),
       
       body: catalogState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -30,7 +53,7 @@ class PosScreen extends ConsumerWidget {
           if (categories.isEmpty) return const Center(child: Text("Menu vuoto."));
 
           return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 100),
+            padding: const EdgeInsets.only(bottom: 24),
             itemCount: categories.length,
             itemBuilder: (context, index) {
               final category = categories[index];
@@ -39,12 +62,20 @@ class PosScreen extends ConsumerWidget {
                 title: Text(category.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 children: category.products.map((product) => ListTile(
                   leading: const Icon(Icons.fastfood, color: Colors.orange),
-                  title: Text(product.name),
+                  title: Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text("€${product.price.toStringAsFixed(2)}"),
                   trailing: IconButton(
                     icon: const Icon(Icons.add_circle, color: Colors.green, size: 30),
                     onPressed: () {
+                      // Aggiunge la pizza al carrello e mostra un mini-avviso
                       ref.read(cartProvider.notifier).addProduct(product);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("${product.name} aggiunto!"), 
+                          duration: const Duration(seconds: 1),
+                          behavior: SnackBarBehavior.floating,
+                        )
+                      );
                     },
                   ),
                 )).toList(),
@@ -53,47 +84,6 @@ class PosScreen extends ConsumerWidget {
           );
         },
       ),
-
-      // LA BARRA IN BASSO
-      bottomSheet: cartItems.isEmpty 
-          ? const SizedBox.shrink()
-          : Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(16.0),
-              child: SafeArea(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("${cartItems.length} Prodotti", style: const TextStyle(color: Colors.grey)),
-                        Text("Totale: €${totalAmount.toStringAsFixed(2)}", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                      ),
-                      onPressed: () async {
-                        // 🚀 IL CAMERIERE SPARA L'ORDINE IN CUCINA (Anonimo e Aperto)
-                        final success = await ref.read(cartProvider.notifier).checkout(ref, resourceId);
-                        
-                        if (success && context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("✅ Ordine inviato!"), backgroundColor: Colors.green),
-                          );
-                          context.pop(); // Chiudiamo il POS e torniamo alla mappa
-                        }
-                      },
-                      child: const Text("INVIA ORDINE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                    )
-                  ],
-                ),
-              ),
-            ),
     );
   }
 }
