@@ -14,7 +14,7 @@ import '../features/hr/presentation/management_screen.dart';
 import '../features/hr/presentation/add_employee_screen.dart';
 import '../features/crm/presentation/add_customer_screen.dart';
 import '../features/activity/presentation/activity_screen.dart'; 
-
+import '../features/analytics/presentation/analytics_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -159,6 +159,17 @@ final routerProvider = Provider<GoRouter>((ref) {
                     ),
                   ],
                 ),
+              ),
+            ],
+          ),
+
+          // 📊 NUOVO RAMO 6: STATISTICHE E ANALYTICS
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/analytics', // Il percorso URL
+                // Ricordati di importare in cima al file: import '../features/analytics/presentation/analytics_screen.dart';
+                builder: (context, state) => const AnalyticsScreen(), 
               ),
             ],
           ),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router.dart';
 import 'package:intl/date_symbol_data_local.dart'; // Ottimo, l'avevi già messo!
@@ -10,7 +10,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 3. 🇮🇹 Carichiamo il calendario in italiano!
-  await initializeDateFormatting('it_IT', null);
+  await initializeDateFormatting('it_IT', null);  
 
   // 4. Ora possiamo lanciare l'app in sicurezza
   runApp(const ProviderScope(child: JuicyApp()));

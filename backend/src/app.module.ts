@@ -15,9 +15,16 @@ import { MapElementModule } from './map-element/map-element.module';
 import { EmployeeModule } from './employee/employee.module';
 import { ShiftModule } from './shift/shift.module';
 import { CustomerModule } from './customer/customer.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+
 
 @Module({
-  imports: [GuestModule, AuthModule, CatalogModule, AreaModule, ResourceModule, OrderModule, StripeModule, DashboardModule, BookingModule, MapElementModule, EmployeeModule, ShiftModule, CustomerModule],
+  imports: [
+    GuestModule, AuthModule, CatalogModule, AreaModule, 
+    ResourceModule, OrderModule, StripeModule, DashboardModule, 
+    BookingModule, MapElementModule, EmployeeModule, ShiftModule, 
+    CustomerModule, AnalyticsModule,
+  ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })
