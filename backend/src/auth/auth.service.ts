@@ -1,3 +1,5 @@
+// backend/src/auth/auth.service.ts
+
 import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service'; // Per parlare con il DB
 import { JwtService } from '@nestjs/jwt'; // Per generare il "badge" (token)

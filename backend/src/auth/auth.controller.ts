@@ -1,3 +1,6 @@
+// backend/src/auth/auth.controller.ts
+
+
 import { Controller, Body, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 // Importiamo i DTO per la validazione automatica dei dati in ingresso

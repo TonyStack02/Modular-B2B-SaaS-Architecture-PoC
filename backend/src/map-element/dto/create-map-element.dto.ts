@@ -1,3 +1,5 @@
+// backend/src/map-element/dto/create-map-element.dto.ts
+
 import { IsString, IsNumber, IsOptional } from 'class-validator';
 
 export class CreateMapElementDto {

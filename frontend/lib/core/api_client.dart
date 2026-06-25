@@ -7,7 +7,7 @@ import 'token_provider.dart'; // Importiamo la cassaforte
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
-      baseUrl: 'http://localhost:3000', // 10.41.0.25:3000
+      baseUrl: 'http://10.41.0.25:3000/', //  10.0.2.2:3000 localhost:3000 per pc funziona
       connectTimeout: const Duration(seconds: 5),
       receiveTimeout: const Duration(seconds: 3),
     ),
