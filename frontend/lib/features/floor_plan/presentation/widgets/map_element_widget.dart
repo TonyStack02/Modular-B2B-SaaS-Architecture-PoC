@@ -1,7 +1,7 @@
 // lib/features/floor_plan/presentation/widgets/map_element_widget.dart
 
 import 'package:flutter/material.dart';
-import '../../data/domain/map_element_model.dart';
+import '../../domain/map_element_model.dart';
 
 class MapElementWidget extends StatelessWidget {
   final MapElementModel element;

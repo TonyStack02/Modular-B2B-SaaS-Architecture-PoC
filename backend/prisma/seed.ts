@@ -1,107 +1,71 @@
 // backend/prisma/seed.ts
-/*
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
-
-async function main() {
-  console.log('🔥 INIZIO PROTOCOLLO DESERTO: Svuotamento totale del database in corso...');
-
-  // 1. FOGLIE ESTREME (Transazioni, incassi e prenotazioni)
-  await prisma.orderItem.deleteMany(); 
-  await prisma.order.deleteMany();     
-  await prisma.booking.deleteMany();
-
-  // 2. RISORSE UMANE (Turni, ferie e dipendenti)
-  await prisma.shift.deleteMany();
-  await prisma.leaveRequest.deleteMany();
-  await prisma.employee.deleteMany();
-
-  // 3. CRM E MENU (Clienti in rubrica, pizze e categorie)
-  await prisma.customer.deleteMany();
-  await prisma.product.deleteMany();   
-  await prisma.category.deleteMany();  
-
-  // 4. IL LOCALE FISICO (Tavoli, porte, muri e sale)
-  await prisma.resource.deleteMany();  
-  await prisma.mapElement.deleteMany(); 
-  await prisma.area.deleteMany();      
-  
-  // 5. UTENTI E PROPRIETARI (Nessuno potrà più fare login)
-  await prisma.user.deleteMany();      
-  
-  // 6. IL NUCLEO (I Ristoranti stessi)
-  await prisma.tenant.deleteMany();    
-
-  console.log('🏜️ PROTOCOLLO COMPLETATO: Il database ora è un deserto. Non c\'è letteralmente più nulla.');
-}
-
-main()
-  .catch((e) => {
-    console.error('❌ Errore durante l\'apocalisse:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
-  */
-
-// backend/prisma/seed.ts
-/*
 import { PrismaClient } from '@prisma/client';
 import { fakerIT as faker } from '@faker-js/faker';
 
+// Inizializziamo il client di Prisma
 const prisma = new PrismaClient();
 
-// 🎯 IL TUO BERSAGLIO (Il ristorante "Gio's" che hai creato)
-const TARGET_TENANT_ID = '231230c9-b0bd-49ab-87a9-699be3e4b2ad';
+// Il tuo ID fisso per non perdere i riferimenti con il frontend
+const TARGET_TENANT_ID = 'b6d3af02-fe8e-422c-ad1e-0172d788fd40';
 
-async function main() {
-  console.log('🔥 INIZIO PROTOCOLLO "FENICE": Bruciamo tutto e rinasciamo più forti...');
+// ==========================================
+// 🧹 FUNZIONE 1: L'IDROPULITRICE (Svuota Tutto)
+// ==========================================
+async function svuotaTutto() {
+  console.log('🔥 AVVIO PULIZIA: Svuotamento totale del database in corso...');
 
-  // 0. Verifica di sicurezza
-  const tenant = await prisma.tenant.findUnique({ where: { id: TARGET_TENANT_ID } });
-  if (!tenant) {
-    console.error('❌ ERRORE: Ristorante Gio\'s non trovato! Controlla il TenantID.'); 
-    return;
-  }
-  console.log(`✅ Trovato Ristorante: ${tenant.name}. Procedo con la pulizia chirurgica...`);
-
-  // ==========================================
-  // 🧹 FASE 1: L'IDROPULITRICE (Svuotiamo tutto TRANNE Tenant e User)
-  // ==========================================
+  // 1. Dati operativi (Checklist, Ordini, Prenotazioni)
+  // Eliminiamo per prime le tabelle "figlie" che dipendono dalle altre
+  await prisma.checklistTaskResult.deleteMany({ where: { instance: { tenantId: TARGET_TENANT_ID } } });
+  await prisma.checklistInstance.deleteMany({ where: { tenantId: TARGET_TENANT_ID } });
+  await prisma.checklistTaskTemplate.deleteMany({ where: { template: { tenantId: TARGET_TENANT_ID } } });
+  await prisma.checklistTemplate.deleteMany({ where: { tenantId: TARGET_TENANT_ID } });
   
-  // A. Transazioni (Nota: OrderItem non ha tenantId, quindi filtriamo tramite l'Order)
   await prisma.orderItem.deleteMany({ where: { order: { tenantId: TARGET_TENANT_ID } } }); 
   await prisma.order.deleteMany({ where: { tenantId: TARGET_TENANT_ID } });     
   await prisma.booking.deleteMany({ where: { tenantId: TARGET_TENANT_ID } });
 
-  // B. Risorse Umane
+  // 2. Risorse Umane
   await prisma.shift.deleteMany({ where: { tenantId: TARGET_TENANT_ID } });
   await prisma.leaveRequest.deleteMany({ where: { tenantId: TARGET_TENANT_ID } });
   await prisma.employee.deleteMany({ where: { tenantId: TARGET_TENANT_ID } });
 
-  // C. CRM e Menu
+  // 3. CRM e Menu
   await prisma.customer.deleteMany({ where: { tenantId: TARGET_TENANT_ID } });
   await prisma.product.deleteMany({ where: { tenantId: TARGET_TENANT_ID } });   
   await prisma.category.deleteMany({ where: { tenantId: TARGET_TENANT_ID } });  
 
-  // D. Locale Fisico
+  // 4. Locale Fisico
   await prisma.resource.deleteMany({ where: { tenantId: TARGET_TENANT_ID } });  
   await prisma.mapElement.deleteMany({ where: { tenantId: TARGET_TENANT_ID } }); 
   await prisma.area.deleteMany({ where: { tenantId: TARGET_TENANT_ID } }); 
 
-  console.log('✨ Database pulito a specchio. Il tuo account è salvo. Inizio la MEGA-INIEZIONE...');
+  console.log('✨ Database pulito a specchio.');
+}
 
-  // ==========================================
-  // 🏗️ FASE 2: RICOSTRUZIONE (Mappa e Aree)
-  // ==========================================
-  console.log('🏗️ Costruzione di 3 Sale e 25 Tavoli...');
+// ==========================================
+// 🏗️ FUNZIONE 2: LA FENICE (Riempe Tutto)
+// ==========================================
+async function riempiTutto() {
+  console.log('🏗️ AVVIO RICOSTRUZIONE: Iniezione dei dati in corso...');
+
+  // 0. Assicuriamoci che il Ristorante (Tenant) esista
+  const tenant = await prisma.tenant.upsert({
+    where: { id: TARGET_TENANT_ID },
+    update: {}, // Se esiste già non lo tocca
+    create: {
+      id: TARGET_TENANT_ID,
+      name: "Ristorante di Gioele",
+      type: "RESTAURANT"
+    }
+  });
+
+  // 1. RICOSTRUZIONE MAPPA E AREE
   const salaPrincipale = await prisma.area.create({ data: { name: 'Sala Principale', tenantId: TARGET_TENANT_ID, positionX: 0, positionY: 0, width: 800, height: 600 } });
   const terrazza = await prisma.area.create({ data: { name: 'Terrazza Estiva', tenantId: TARGET_TENANT_ID, positionX: 850, positionY: 0, width: 400, height: 600 } });
   const privee = await prisma.area.create({ data: { name: 'Privée VIP', tenantId: TARGET_TENANT_ID, positionX: 0, positionY: 650, width: 500, height: 300 } });
 
-  // Aggiungiamo un po' di muri e dettagli per la mappa
   await prisma.mapElement.createMany({
     data: [
       { type: 'WALL', positionX: 0, positionY: 0, width: 800, height: 20, tenantId: TARGET_TENANT_ID },
@@ -113,26 +77,20 @@ async function main() {
   });
 
   const tables: any[] = [];
-  // 12 tavoli in sala
   for (let i = 1; i <= 12; i++) {
     const table = await prisma.resource.create({ data: { name: `Tavolo ${i}`, areaId: salaPrincipale.id, tenantId: TARGET_TENANT_ID, capacity: faker.number.int({ min: 2, max: 6 }) } });
     tables.push(table);
   }
-  // 8 in terrazza
   for (let i = 1; i <= 8; i++) {
     const table = await prisma.resource.create({ data: { name: `Esterno ${i}`, areaId: terrazza.id, tenantId: TARGET_TENANT_ID, capacity: faker.number.int({ min: 2, max: 4 }) } });
     tables.push(table);
   }
-  // 5 nel privè
   for (let i = 1; i <= 5; i++) {
     const table = await prisma.resource.create({ data: { name: `VIP ${i}`, areaId: privee.id, tenantId: TARGET_TENANT_ID, capacity: faker.number.int({ min: 4, max: 10 }) } });
     tables.push(table);
   }
 
-  // ==========================================
-  // 🍔 FASE 3: MENU GIGANTE (6 Categorie, 30+ Prodotti)
-  // ==========================================
-  console.log('🍕 Cucina in fiamme... Preparo un menu esagerato!');
+  // 2. CREAZIONE MENU GIGANTE
   const catAntipasti = await prisma.category.create({ data: { name: 'Antipasti', tenantId: TARGET_TENANT_ID } });
   const catPrimi = await prisma.category.create({ data: { name: 'Primi Piatti', tenantId: TARGET_TENANT_ID } });
   const catSecondi = await prisma.category.create({ data: { name: 'Secondi di Carne', tenantId: TARGET_TENANT_ID } });
@@ -142,33 +100,27 @@ async function main() {
 
   await prisma.product.createMany({
     data: [
-      // Antipasti
       { name: 'Tagliere Imperiale', price: 18.00, categoryId: catAntipasti.id, tenantId: TARGET_TENANT_ID, description: 'Salumi, formaggi, miele, noci' },
       { name: 'Bruschette Miste', price: 8.00, categoryId: catAntipasti.id, tenantId: TARGET_TENANT_ID },
       { name: 'Tartare di Manzo', price: 14.50, categoryId: catAntipasti.id, tenantId: TARGET_TENANT_ID, description: 'Con tuorlo marinato e tartufo' },
       { name: 'Fiori di Zucca Fritti', price: 9.00, categoryId: catAntipasti.id, tenantId: TARGET_TENANT_ID },
-      // Primi
       { name: 'Spaghettoni Carbonara', price: 13.00, categoryId: catPrimi.id, tenantId: TARGET_TENANT_ID, description: 'Guanciale croccante, pecorino romano, pepe nero' },
       { name: 'Paccheri al Ragù di Cinghiale', price: 15.50, categoryId: catPrimi.id, tenantId: TARGET_TENANT_ID },
       { name: 'Risotto Zafferano e Salsiccia', price: 14.00, categoryId: catPrimi.id, tenantId: TARGET_TENANT_ID },
       { name: 'Ravioli Burro e Salvia', price: 12.00, categoryId: catPrimi.id, tenantId: TARGET_TENANT_ID },
-      // Secondi
       { name: 'Tagliata di Fassona', price: 22.00, categoryId: catSecondi.id, tenantId: TARGET_TENANT_ID, description: 'Rucola, grana, pomodorini' },
       { name: 'Filetto al Pepe Verde', price: 25.00, categoryId: catSecondi.id, tenantId: TARGET_TENANT_ID },
       { name: 'Grigliata Mista', price: 28.00, categoryId: catSecondi.id, tenantId: TARGET_TENANT_ID },
-      // Pizze
       { name: 'Regina Margherita', price: 7.50, categoryId: catPizze.id, tenantId: TARGET_TENANT_ID, description: 'Mozzarella di Bufala DOP' },
       { name: 'Diavola', price: 8.50, categoryId: catPizze.id, tenantId: TARGET_TENANT_ID },
       { name: 'Pistacchiosa', price: 14.00, categoryId: catPizze.id, tenantId: TARGET_TENANT_ID, description: 'Mortadella, pesto di pistacchio, burrata' },
       { name: 'Tartufata', price: 15.50, categoryId: catPizze.id, tenantId: TARGET_TENANT_ID },
       { name: 'Calzone Classico', price: 9.00, categoryId: catPizze.id, tenantId: TARGET_TENANT_ID },
       { name: 'Salsiccia e Friarielli', price: 10.00, categoryId: catPizze.id, tenantId: TARGET_TENANT_ID },
-      // Dolci
       { name: 'Tiramisù della Nonna', price: 6.50, categoryId: catDolci.id, tenantId: TARGET_TENANT_ID },
       { name: 'Cheesecake Frutti Rossi', price: 7.00, categoryId: catDolci.id, tenantId: TARGET_TENANT_ID },
       { name: 'Panna Cotta al Caramello', price: 6.00, categoryId: catDolci.id, tenantId: TARGET_TENANT_ID },
       { name: 'Cannolo Scomposto', price: 7.50, categoryId: catDolci.id, tenantId: TARGET_TENANT_ID },
-      // Bevande
       { name: 'Acqua Naturale 1L', price: 2.50, categoryId: catBevande.id, tenantId: TARGET_TENANT_ID },
       { name: 'Acqua Frizzante 1L', price: 2.50, categoryId: catBevande.id, tenantId: TARGET_TENANT_ID },
       { name: 'Coca Cola', price: 3.50, categoryId: catBevande.id, tenantId: TARGET_TENANT_ID },
@@ -181,13 +133,9 @@ async function main() {
   });
   const allProducts = await prisma.product.findMany({ where: { tenantId: TARGET_TENANT_ID } });
 
-  // ==========================================
-  // 🧑‍🍳 FASE 4: HR - STAFF, TURNI E FERIE
-  // ==========================================
-  console.log('🧑‍🍳 Assunzione 12 Dipendenti e generazione Turni storici...');
+  // 3. HR - STAFF, TURNI E FERIE
   const roles = ['Cameriere', 'Cuoco', 'Capo Sala', 'Lavapiatti', 'Bartender', 'Pizzaiolo'];
   const employees: any[] = [];
-
   for (let i = 0; i < 12; i++) {
     const employee = await prisma.employee.create({
       data: {
@@ -207,7 +155,6 @@ async function main() {
     });
     employees.push(employee);
 
-    // 10 turni per dipendente (storico presenze)
     for(let s=0; s<10; s++) {
       const shiftStart = faker.date.recent({ days: 30 });
       const shiftEnd = new Date(shiftStart.getTime() + faker.number.int({ min: 6, max: 9 }) * 60 * 60 * 1000); 
@@ -236,10 +183,7 @@ async function main() {
     }
   }
 
-  // ==========================================
-  // 📖 FASE 5: CRM E PRENOTAZIONI GIGANTI
-  // ==========================================
-  console.log('📖 Generazione 80 Clienti VIP e 60 Prenotazioni...');
+  // 4. CRM E PRENOTAZIONI
   const customers: any[] = [];
   for (let i = 0; i < 80; i++) {
     const customer = await prisma.customer.create({
@@ -273,28 +217,20 @@ async function main() {
     });
   }
 
-  // ==========================================
-  // 💸 FASE 6: IL TESORO (600 SCONTRINI STORICI)
-  // ==========================================
-  console.log('💸 Stampando 600 Scontrini storici (6 Mesi di dati)... Stiamo facendo i milioni!');
-  
+  // 5. IL TESORO (600 SCONTRINI STORICI)
   for (let i = 0; i < 600; i++) {
     const randomTable = faker.helpers.arrayElement(tables);
     const randomCustomer = Math.random() > 0.4 ? faker.helpers.arrayElement(customers) : null;
-
-    // Distribuiti negli ultimi 6 MESI
     const orderDate = faker.date.recent({ days: 180 });
-    // Da 45 a 180 minuti seduti
     const closedDate = new Date(orderDate.getTime() + faker.number.int({ min: 45, max: 180 }) * 60000);
 
-    // Ordini più grandi: da 2 a 8 piatti/bevande diversi per tavolo
     const numItems = faker.number.int({ min: 2, max: 8 });
     let calculatedTotal = 0;
     const orderItems: any[] = [];
 
     for (let j = 0; j < numItems; j++) {
       const randomProduct = faker.helpers.arrayElement(allProducts);
-      const quantity = faker.number.int({ min: 1, max: 5 }); // Fino a 5 birre per tavolo
+      const quantity = faker.number.int({ min: 1, max: 5 }); 
       calculatedTotal += Number(randomProduct.price) * quantity;
 
       orderItems.push({
@@ -329,60 +265,29 @@ async function main() {
     }
   }
 
-  console.log('✅ 600 Ordini generati con precisione millimetrica.');
-  console.log('🎉 PROTOCOLLO FENICE COMPLETATO! Vai sull\'app, fai un bel reload (F5) e goditi la potenza dei tuoi nuovi dati!');
+  console.log('🎉 DATI INIETTATI CON SUCCESSO!');
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
-  */
-
-// backend/prisma/seed.ts
-
-import { PrismaClient } from '@prisma/client';
-
-// 1. Inizializziamo il client di Prisma per poter parlare con il database
-const prisma = new PrismaClient();
-
-// 2. Salviamo in una costante l'ID esatto del muro che vogliamo abbattere
-const WALL_ID = '8e0a6255-1afd-4719-b260-3ec704154a77';
-
+// ==========================================
+// 🕹️ IL PANNELLO DI CONTROLLO PRINCIPALE
+// Commenta o scommenta le righe qui sotto per decidere cosa far fare allo script.
+// ==========================================
 async function main() {
-  console.log(`🎯 Avvio operazione cecchino: eliminazione del muro ${WALL_ID}...`);
+  
+  // 1. Svuota completamente il database (utile se hai dati vecchi incasinati)
+  //await svuotaTutto();
 
-  try {
-    // 3. Usiamo il metodo delete() puntando dritto alla tabella mapElement
-    // Passiamo l'ID esatto nella clausola "where" per essere sicuri di colpire solo quello
-    const deletedWall = await prisma.mapElement.delete({
-      where: { 
-        id: WALL_ID 
-      }
-    });
-
-    // 4. Se arriviamo qui, il database ci ha confermato l'eliminazione
-    console.log('✅ Bersaglio eliminato con successo!');
-    console.log(`Dettagli elemento rimosso: Tipo -> ${deletedWall.type}, Posizione -> X:${deletedWall.positionX} Y:${deletedWall.positionY}`);
-
-  } catch (error) {
-    // 5. Se l'ID non esiste (magari l'hai già cancellato o c'è un refuso), Prisma va in errore.
-    // Lo catturiamo qui per non far esplodere il terminale e mostriamo un messaggio chiaro.
-    console.error('❌ Errore: Muro non trovato o già eliminato. Dettagli errore:', error);
-  }
+  // 2. Riempi il database con tutti i dati finti (Mappa, Ordini, Dipendenti, ecc.)
+  await riempiTutto();
+  
 }
 
-// 6. Eseguiamo la funzione principale e, una volta finito, chiudiamo la connessione col database
 main()
   .catch((e) => {
     console.error(e);
     process.exit(1);
   })
   .finally(async () => {
-    // Disconnessione pulita per non lasciare "connessioni appese" al server PostgreSQL
+    // Chiudiamo la connessione al database
     await prisma.$disconnect();
   });

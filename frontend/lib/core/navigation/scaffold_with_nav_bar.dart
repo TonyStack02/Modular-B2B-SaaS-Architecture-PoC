@@ -48,8 +48,12 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
           NavigationDestination(label: 'Gestione', icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people)),
           NavigationDestination(label: 'Impostazioni', icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings)),
           
-          // 📊 IL NUOVO BOTTONE DELLE STATISTICHE (Indice 5)
+          // 📊 IL BOTTONE DELLE STATISTICHE (Indice 5)
           NavigationDestination(label: 'Statistiche', icon: Icon(Icons.bar_chart_outlined), selectedIcon: Icon(Icons.bar_chart)),
+          
+          // ✅ IL NUOVO BOTTONE DELLE CHECKLIST (Indice 6)
+          // Aggiungiamo temporaneamente questo tab per testare la feature
+          NavigationDestination(label: 'Checklist', icon: Icon(Icons.checklist_rtl_outlined), selectedIcon: Icon(Icons.checklist_rtl)),
         ],
         onDestinationSelected: (index) => _onTap(context, index),
       ),

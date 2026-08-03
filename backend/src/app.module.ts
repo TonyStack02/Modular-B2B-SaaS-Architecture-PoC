@@ -16,6 +16,8 @@ import { EmployeeModule } from './employee/employee.module';
 import { ShiftModule } from './shift/shift.module';
 import { CustomerModule } from './customer/customer.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { ChecklistModule } from './checklist/checklist.module';
+
 
 
 @Module({
@@ -23,7 +25,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     GuestModule, AuthModule, CatalogModule, AreaModule, 
     ResourceModule, OrderModule, StripeModule, DashboardModule, 
     BookingModule, MapElementModule, EmployeeModule, ShiftModule, 
-    CustomerModule, AnalyticsModule,
+    CustomerModule, AnalyticsModule, ChecklistModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

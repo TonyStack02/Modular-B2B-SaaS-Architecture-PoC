@@ -1,7 +1,10 @@
+//C:\Users\Samsung\Desktop\juicy_project\frontend\lib\core\router.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/auth/presentation/register_screen.dart';
 import 'package:frontend/features/booking/presentation/calendar_screen.dart';
+import 'package:frontend/features/checklist/presentation/checklist_screen.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/login_screen.dart';
@@ -170,6 +173,24 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: '/analytics', // Il percorso URL
                 // Ricordati di importare in cima al file: import '../features/analytics/presentation/analytics_screen.dart';
                 builder: (context, state) => const AnalyticsScreen(), 
+              ),
+            ],
+          ),
+
+        // ✅ NUOVO RAMO 7: CHECKLIST
+         StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/checklist',
+                builder: (context, state) {
+                  // Qui dovrai passare l'ID del tenant dal provider di auth, 
+                  // e generare un'istanza ID (o passargliene una finta per ora)
+                  return const ChecklistScreen(
+                    tenantId: '231230c9-b0bd-49ab-87a9-699be3e4b2ad',
+                    instanceId: 'istanza_test_123',
+                    currentEmployeeId: 'cameriere_mario_01',
+                  );
+                },
               ),
             ],
           ),

@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'booking_controller.dart';
 import '../domain/booking_model.dart';
 import '../../floor_plan/presentation/floor_plan_controller.dart';
-import '../../floor_plan/data/domain/resource_model.dart';
+import '../../floor_plan/domain/resource_model.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});

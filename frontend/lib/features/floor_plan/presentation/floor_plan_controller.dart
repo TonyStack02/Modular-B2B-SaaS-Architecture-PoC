@@ -2,9 +2,9 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/floor_plan_repository.dart';
-import '../data/domain/area_model.dart';
-import '../data/domain/resource_model.dart';
-import '../data/domain/map_element_model.dart';
+import '../domain/area_model.dart';
+import '../domain/resource_model.dart';
+import '../domain/map_element_model.dart';
 
 // Un "pacchetto" custom per contenere sia le aree che le risorse insieme
 class FloorPlanState {

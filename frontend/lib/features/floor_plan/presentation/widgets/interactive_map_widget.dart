@@ -2,10 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:frontend/features/floor_plan/data/domain/map_element_model.dart';
+import 'package:frontend/features/floor_plan/domain/map_element_model.dart';
 import 'package:frontend/features/floor_plan/presentation/widgets/map_element_widget.dart';
 import '../floor_plan_controller.dart';
-import '../../data/domain/resource_model.dart';
+import '../../domain/resource_model.dart';
 import 'resource_widget.dart'; 
 
 

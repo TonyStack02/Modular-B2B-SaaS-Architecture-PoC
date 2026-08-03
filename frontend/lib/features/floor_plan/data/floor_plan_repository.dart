@@ -2,10 +2,10 @@
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:frontend/features/floor_plan/data/domain/map_element_model.dart';
+import 'package:frontend/features/floor_plan/domain/map_element_model.dart';
 import '../../../core/api_client.dart';
-import 'domain/area_model.dart';
-import 'domain/resource_model.dart';
+import '../domain/area_model.dart';
+import '../domain/resource_model.dart';
 
 final floorPlanRepositoryProvider = Provider<FloorPlanRepository>((ref) {
   return FloorPlanRepository(ref.read(dioProvider));

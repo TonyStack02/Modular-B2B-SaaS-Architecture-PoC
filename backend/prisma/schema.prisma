@@ -36,6 +36,8 @@ model Tenant {
   shifts        Shift[]
   leaves        LeaveRequest[]  
   customers      Customer[]
+  checklistTemplates ChecklistTemplate[]
+  checklistInstances ChecklistInstance[]
 }
 
 model User {
@@ -278,6 +280,7 @@ model Employee {
 
   shifts        Shift[]
   leaves        LeaveRequest[]
+  taskResults ChecklistTaskResult[]
 }
 
 // --- 8. GESTIONE TURNI E PIANIFICAZIONE ---
@@ -348,4 +351,147 @@ model Customer {
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// --- 10. CHECKLIST OPERATIVE E HACCP (Academy & Operations) ---
+
+// Definiamo i tipi di risposta possibili per una domanda della checklist
+enum TaskType {
+  BOOLEAN // La classica spunta "Fatto / Non Fatto"
+  NUMBER  // Inserimento di un numero (Fondamentale per le temperature HACCP)
+  PHOTO   // Obbliga a scattare o caricare una foto (Es: "Foto del forno pulito")
+  TEXT    // Testo libero (Es: "Segna qui se manca materiale")
+}
+
+// 1. IL MODELLO (Creato dal titolare una volta sola)
+model ChecklistTemplate {
+  id          String   @id @default(uuid())
+  name        String   // Es: "Chiusura Cucina", "Controllo Bagni"
+  description String?  // Istruzioni generali: "Da fare tutti i giorni alle 23:00"
+  
+  // Assegnazione: a chi è rivolta? (Es: "Cuoco", "Sala" - opzionale)
+  targetRole  String?  
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  // 🔴 1. LE NUOVE REGOLE DI SCHEDULAZIONE 🔴
+  // Array che contiene i giorni in cui il modello è attivo 
+  // (es. ["MONDAY", "WEDNESDAY", "FRIDAY"])
+  daysOfWeek  String[]
+  
+  // Array che contiene le fasce orarie in cui generare l'istanza 
+  // (es. ["14:30", "23:45"]). Se un giorno ha 2 orari, il sistema ne genererà 2 al giorno!
+  targetTimes String[]
+
+  tasks       ChecklistTaskTemplate[] // Le domande dentro questo modello
+  instances   ChecklistInstance[]     // Le copie giornaliere generate da questo modello
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 2. LE DOMANDE DEL MODELLO
+model ChecklistTaskTemplate {
+  id          String   @id @default(uuid())
+  title       String   // Es: "Hai spento la friggitrice?", "Temperatura Frigo 1"
+  type        TaskType @default(BOOLEAN) // Che tipo di risposta mi aspetto?
+  isRequired  Boolean  @default(true)    // È obbligatoria per completare la checklist?
+  order       Int      @default(0)       // L'ordine in cui mostrare le domande (1, 2, 3...)
+
+  templateId  String
+  template    ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  results     ChecklistTaskResult[] // I risultati reali inseriti dai camerieri
+}
+
+// 3. LA COPIA GIORNALIERA (Generata dal server ogni giorno per essere compilata)
+model ChecklistInstance {
+  id          String   @id @default(uuid())
+  
+  // Per la logica Lazy, la 'date' rappresenterà la "data logica" senza l'orario, 
+  // ovvero il giorno esatto a cui si riferisce (es. 2026-07-24T00:00:00Z)
+  date        DateTime 
+  
+  // 🔴 2. IL NUOVO CAMPO ORARIO 🔴
+  // Questo campo ci dice per QUALE orario è stata generata questa copia specifica (es. "23:45")
+  targetTime  String   
+
+  status      String   @default("PENDING") // PENDING (In corso), COMPLETED (Finita)
+  
+  templateId  String
+  template    ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  results     ChecklistTaskResult[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 🔴 3. IL VINCOLO SALVA-VITA (Indice Univoco Multiplo) 🔴
+  // Questo è il vero trucco magico. Dicendo a PostgreSQL che la combinazione 
+  // [template, giorno, orario] deve essere UNICA, rendiamo impossibile 
+  // generare per errore la stessa checklist due volte, anche se 10 camerieri 
+  // aprono l'app nello stesso esatto decimo di secondo!
+  @@unique([templateId, date, targetTime])
+}
+
+// 4. LE RISPOSTE (L'azione reale del cameriere)
+model ChecklistTaskResult {
+  id              String   @id @default(uuid())
+  
+  // Salviamo la risposta come stringa per comodità, poi il frontend/backend la interpreterà
+  // Se è BOOLEAN -> "true"
+  // Se è NUMBER -> "4.5" (gradi)
+  // Se è PHOTO -> "https://iltuosito.com/foto_forno.jpg"
+  value           String?  
+  
+  // Se il cameriere ha un problema (es. "Finito il detersivo"), lo scrive qui
+  notes           String?  
+  
+  // L'ora esatta spaccata al millisecondo in cui ha fatto "Tap"
+  timestamp       DateTime @default(now())
+
+  // Chi ha messo la spunta? (L'Accountability che vuole il titolare)
+  employeeId      String
+  employee        Employee @relation(fields: [employeeId], references: [id])
+
+  // A quale copia giornaliera appartiene?
+  instanceId      String
+  instance        ChecklistInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  // A quale domanda del modello sta rispondendo?
+  taskTemplateId  String
+  taskTemplate    ChecklistTaskTemplate @relation(fields: [taskTemplateId], references: [id], onDelete: Cascade)
+
+  // MAGIC TRICK: Indice Univoco! 
+  // Garantisce che in una specifica checklist giornaliera, una specifica domanda abbia UNA SOLA risposta.
+  // Permette al database di fare l'UPSERT velocissimo senza doppioni!
+  @@unique([instanceId, taskTemplateId])
 }

@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'floor_plan_controller.dart';
-import '../data/domain/area_model.dart';
-import '../data/domain/resource_model.dart';
+import '../domain/area_model.dart';
+import '../domain/resource_model.dart';
 import '../../orders/presentation/order_controller.dart'; 
 import '../../orders/domain/order_model.dart';
 

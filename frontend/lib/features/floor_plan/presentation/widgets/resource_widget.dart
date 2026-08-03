@@ -1,7 +1,7 @@
 // lib/features/floor_plan/presentation/widgets/resource_widget.dart
 
 import 'package:flutter/material.dart';
-import '../../data/domain/resource_model.dart';
+import '../../domain/resource_model.dart';
 
 class ResourceWidget extends StatelessWidget {
   final ResourceModel resource;
