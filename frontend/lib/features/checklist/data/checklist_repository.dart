@@ -37,4 +37,28 @@ class ChecklistRepository {
   Future<void> createTemplateHttp(Map<String, dynamic> data) async {
      await _dio.post('/checklists/templates', data: data); 
   }
+
+  /*
+   * ⬇️ SCARICA TUTTE LE CHECKLIST DI OGGI
+   * Chiama la rotta Lazy del backend che genera (se mancano) e restituisce
+   * l'elenco completo delle routine previste per la giornata.
+   */
+  Future<List<ChecklistInstanceModel>> getDailyChecklistsList(String tenantId) async {
+    // Effettuiamo la chiamata GET passando il tenantId come parametro query
+    final response = await _dio.get(
+      '/checklists/daily',
+      queryParameters: {'tenantId': tenantId},
+    );
+    
+    // Se la risposta è vuota o null, ritorniamo una lista vuota per evitare crash
+    if (response.data == null || response.data == '') {
+      return [];
+    }
+
+    // Trasformiamo il JSON restituito in una lista dinamica
+    final List<dynamic> data = response.data;
+    
+    // Mappiamo ogni elemento del JSON trasformandolo nel nostro modello fortemente tipizzato
+    return data.map((json) => ChecklistInstanceModel.fromJson(json)).toList();
+  }
 }

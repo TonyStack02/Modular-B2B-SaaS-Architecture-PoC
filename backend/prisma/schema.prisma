@@ -38,6 +38,13 @@ model Tenant {
   customers      Customer[]
   checklistTemplates ChecklistTemplate[]
   checklistInstances ChecklistInstance[]
+  // Diciamo al Ristorante che ha una lista di Fornitori associata a lui.
+  // Le parentesi quadre [] indicano "Uno a Molti" (Un ristorante, tanti fornitori).
+  suppliers      Supplier[]
+  // Diciamo al Ristorante che possiede un suo inventario/magazzino privato.
+  inventoryItems InventoryItem[]
+  // Diciamo al Ristorante che ha uno storico di ordini effettuati.
+  purchaseOrders PurchaseOrder[]
 }
 
 model User {
@@ -373,10 +380,6 @@ model Customer {
 
 
 
-
-
-
-
 // --- 10. CHECKLIST OPERATIVE E HACCP (Academy & Operations) ---
 
 // Definiamo i tipi di risposta possibili per una domanda della checklist
@@ -494,4 +497,131 @@ model ChecklistTaskResult {
   // Garantisce che in una specifica checklist giornaliera, una specifica domanda abbia UNA SOLA risposta.
   // Permette al database di fare l'UPSERT velocissimo senza doppioni!
   @@unique([instanceId, taskTemplateId])
+}
+
+
+
+
+
+
+// -------------------------------------------------------- MAGAZZINO --------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+// --- 11. MAGAZZINO, FORNITORI E ORDINI (Inventory & Procurement) ---
+
+// 1. IL FORNITORE (Supplier)
+// Questa tabella salva l'anagrafica di chi ci vende la merce.
+model Supplier {
+  // L'identificativo unico del fornitore (generato in automatico)
+  id        String   @id @default(uuid())
+  
+  // Il nome dell'azienda o della persona (es. "MARR", "Macelleria Rossi")
+  name      String   
+  
+  // L'email del fornitore, utilissima per quando vorremo inviare il PDF dell'ordine in automatico
+  email     String?  
+  
+  // Numero di telefono per contatti rapidi (opzionale)
+  phone     String?  
+
+  // Collegamento al Ristorante (Tenant): ogni ristorante ha i SUOI fornitori privati
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  // Relazione "Uno a Molti": Un fornitore ci porta TANTI prodotti diversi
+  items     InventoryItem[] 
+  
+  // Relazione "Uno a Molti": A un fornitore possiamo fare TANTI ordini nel tempo
+  orders    PurchaseOrder[] 
+}
+
+// 2. IL PRODOTTO / INGREDIENTE NEL MAGAZZINO (InventoryItem)
+// Rappresenta l'oggetto fisico che sta in dispensa o in cella frigo.
+model InventoryItem {
+  id             String   @id @default(uuid())
+  
+  // Il nome del prodotto (es. "Farina 00", "Coca Cola in vetro")
+  name           String   
+  
+  // Categoria merceologica utile per filtrare (es. "Secco", "Fresco", "Bevande")
+  category       String   
+  
+  // Unità di misura con cui lo contiamo (es. "Kg", "Litri", "Pezzi", "Cartoni")
+  unit           String   
+  
+  // QUANTITÀ ATTUALE: Quanti ne abbiamo fisicamente in casa in questo momento?
+  // Usiamo Float (numeri con la virgola) perché potremmo avere "1.5 Kg" di carne
+  currentStock   Float    
+  
+  // SOGLIA DI ALLARME: Se il currentStock scende sotto questo numero, 
+  // il prodotto va in "Rosso" e il sistema ci suggerisce di ordinarlo!
+  minimumStock   Float    
+  
+  // Quanto l'abbiamo pagato l'ultima volta? Utile per stimare il costo del prossimo ordine
+  lastPrice      Float?   
+
+  // A quale fornitore lo compriamo di solito? (È opzionale, magari lo compriamo un po' dove capita)
+  supplierId     String?  
+  supplier       Supplier? @relation(fields: [supplierId], references: [id])
+  
+  // Collegamento al Ristorante (Tenant)
+  tenantId       String
+  tenant         Tenant    @relation(fields: [tenantId], references: [id])
+  
+  // Relazione: Questo prodotto in quanti ordini è stato inserito storicamente?
+  orderItems     PurchaseOrderItem[]
+}
+
+// 3. L'ORDINE INTERNO / LA LISTA DELLA SPESA (PurchaseOrder)
+// Questo è il "carrello" che il titolare compone prima di generare il PDF per il fornitore.
+model PurchaseOrder {
+  id          String   @id @default(uuid())
+  
+  // Stato dell'ordine. Di default nasce come "DRAFT" (Bozza che stiamo scrivendo).
+  // Poi diventerà "SENT" (Inviato al fornitore) e infine "DELIVERED" (Merce arrivata, aggiorna il magazzino!)
+  status      String   @default("DRAFT") 
+  
+  // Data e ora in cui stiamo creando l'ordine
+  orderDate   DateTime @default(now())
+  
+  // A quale fornitore stiamo facendo questo ordine? (Es. "Tutto questo va chiesto a MARR")
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  
+  // Collegamento al Ristorante (Tenant)
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  
+  // La lista vera e propria delle cose che stiamo ordinando (Le "righe" dell'ordine)
+  items       PurchaseOrderItem[]
+}
+
+// 4. LE VOCI DELL'ORDINE (PurchaseOrderItem)
+// Rappresenta la singola riga della lista della spesa (es. "10 Kg di Farina a 1.20€ al kg")
+model PurchaseOrderItem {
+  id              String   @id @default(uuid())
+  
+  // Quanta quantità di questo prodotto stiamo chiedendo al fornitore in questo ordine?
+  quantity        Float    
+  
+  // Il prezzo che ci aspettiamo di pagare (copiato dal 'lastPrice' del prodotto nel magazzino).
+  // È utile per far vedere al titolare un "Totale stimato" prima di inviare l'ordine.
+  expectedPrice   Float?   
+  
+  // A quale ordine (carrello) appartiene questa riga?
+  // onDelete: Cascade significa che se cancello l'ordine, cancella in automatico anche le sue righe!
+  orderId         String
+  order           PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Che prodotto stiamo ordinando? (Collegamento all'anagrafica del magazzino)
+  itemId          String
+  item            InventoryItem @relation(fields: [itemId], references: [id])
 }

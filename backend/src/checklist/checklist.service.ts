@@ -170,4 +170,29 @@ export class ChecklistService {
       },
     });
   }
+
+  /**
+   * RECUPERA UNA SINGOLA ISTANZA GIORNALIERA
+   * Questo metodo viene chiamato quando un cameriere clicca su una specifica
+   * checklist dalla lista per aprirne il dettaglio e iniziare a compilarla.
+   */
+  async getInstance(instanceId: string, tenantId: string) {
+    return this.prisma.checklistInstance.findFirst({
+      where: {
+        id: instanceId,    // Cerchiamo l'ID esatto della checklist cliccata
+        tenantId: tenantId, // Assicuriamoci che sia del nostro ristorante
+      },
+      // Includiamo tutti i dati necessari per disegnare la UI (Domande e Risposte)
+      include: {
+        template: {
+          include: {
+            tasks: {
+              orderBy: { order: 'asc' }, // Manteniamo l'ordine (1, 2, 3...)
+            },
+          },
+        },
+        results: true, // Tiriamo giù anche le spunte che magari ha già messo un collega
+      },
+    });
+  }
 }

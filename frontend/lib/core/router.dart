@@ -18,6 +18,7 @@ import '../features/hr/presentation/add_employee_screen.dart';
 import '../features/crm/presentation/add_customer_screen.dart';
 import '../features/activity/presentation/activity_screen.dart'; 
 import '../features/analytics/presentation/analytics_screen.dart';
+import '../features/checklist/presentation/daily_checklists_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -166,7 +167,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
 
-          // 📊 NUOVO RAMO 6: STATISTICHE E ANALYTICS
+          // 📊 RAMO 6: STATISTICHE E ANALYTICS
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -177,7 +178,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
 
-        // ✅ NUOVO RAMO 7: CHECKLIST
+        // ✅ RAMO 7: CHECKLIST
          StatefulShellBranch(
             routes: [
               GoRoute(
@@ -185,9 +186,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) {
                   // Qui dovrai passare l'ID del tenant dal provider di auth, 
                   // e generare un'istanza ID (o passargliene una finta per ora)
-                  return const ChecklistScreen(
+                  return const DailyChecklistsScreen(
                     tenantId: '231230c9-b0bd-49ab-87a9-699be3e4b2ad',
-                    instanceId: 'istanza_test_123',
                     currentEmployeeId: 'cameriere_mario_01',
                   );
                 },

@@ -70,4 +70,17 @@ export class ChecklistController {
       body.description,
     );
   }
+
+  /**
+   * ROTTA GET PER CARICARE UNA SINGOLA CHECKLIST
+   * L'app Flutter chiama questa rotta passando l'ID dell'istanza nell'URL
+   * (es. GET /checklists/d290f1ee-6c54-4b01-90e6-d701748f0851?tenantId=...)
+   */
+  @Get(':id')
+  async getInstance(
+    @Param('id') id: string, // Estrapoliamo l'ID dall'URL
+    @Query('tenantId') tenantId: string, // Estrapoliamo il tenantId dai parametri
+  ) {
+    return this.checklistService.getInstance(id, tenantId);
+  }
 }

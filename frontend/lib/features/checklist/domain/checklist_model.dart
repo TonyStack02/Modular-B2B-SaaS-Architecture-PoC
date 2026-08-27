@@ -52,6 +52,7 @@ class ChecklistInstanceModel {
   final String status;
   final String templateName;
   final String? templateDescription;
+  final String targetTime;
   final List<ChecklistTaskModel> tasks;
   final List<ChecklistResultModel> results;
 
@@ -60,6 +61,7 @@ class ChecklistInstanceModel {
     required this.status,
     required this.templateName,
     this.templateDescription,
+    required this.targetTime,
     required this.tasks,
     required this.results,
   });
@@ -72,6 +74,7 @@ class ChecklistInstanceModel {
       status: json['status']?.toString() ?? 'PENDING',
       templateName: template['name']?.toString() ?? 'Checklist',
       templateDescription: template['description']?.toString(),
+      targetTime: json['targetTime']?.toString() ?? '00:00',
       // Mappiamo le liste in modo sicuro
       tasks: (template['tasks'] as List?)
               ?.map((t) => ChecklistTaskModel.fromJson(t))
@@ -91,6 +94,7 @@ class ChecklistInstanceModel {
       status: status,
       templateName: templateName,
       templateDescription: templateDescription,
+      targetTime: targetTime,
       tasks: tasks,
       results: results ?? this.results,
     );
